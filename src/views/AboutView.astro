@@ -22,10 +22,12 @@ const { Content } = await page.render();
   type="profile"
   jsonLd={[{ '@type': 'ProfilePage', mainEntity: personLd(Astro.site!) }]}
 >
-  {page.isFallback && <TranslationNotice locale={locale} />}
-  <article lang={page.locale}>
-    <h1 class="text-3xl font-semibold tracking-tight">{page.title}</h1>
-    <div class="prose mt-8">
+  <article class="article" lang={page.locale}>
+    {page.isFallback && <TranslationNotice locale={locale} />}
+    <header class="article__head">
+      <h1 class="title">{page.title}</h1>
+    </header>
+    <div class="prose">
       <Content />
     </div>
   </article>

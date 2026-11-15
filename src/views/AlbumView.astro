@@ -1,12 +1,13 @@
 ---
 import { getImage } from 'astro:assets';
 
-import ArchiveGrid from '@/components/content/ArchiveGrid.astro';
+import LinkList from '@/components/content/LinkList.astro';
+import PhotoWall from '@/components/content/PhotoWall.astro';
 import type { Locale } from '@/i18n/config';
 import { alternatesFor, localizePath } from '@/i18n/paths';
 import { t } from '@/i18n/ui';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import type { Album, Photo } from '@/lib/content';
+import type { Album, Link, Photo } from '@/lib/content';
 import { routes } from '@/lib/routes';
 import { breadcrumbLd, imageGalleryLd } from '@/lib/seo/jsonld';
 
@@ -16,6 +17,7 @@ interface Props {
 }
 const { album, locale } = Astro.props;
 const photos = album.items.filter((i): i is Photo => i.kind === 'photo');
+const links = album.items.filter((i): i is Link => i.kind === 'link');
 const galleryImages = await Promise.all(
   photos.map(async (p) => ({
     src: (await getImage({ src: p.image, width: 1600, format: 'jpeg' })).src,
@@ -23,7 +25,7 @@ const galleryImages = await Promise.all(
     title: p.title,
   })),
 );
-const description = album.description ?? `${album.title} · ${t(locale, 'archive.title')}`;
+const description = album.description ?? `${album.title}, ${t(locale, 'archive.title')}`;
 ---
 
 <BaseLayout
@@ -41,14 +43,23 @@ const description = album.description ?? `${album.title} · ${t(locale, 'archive
     ]),
   ]}
 >
-  <p class="text-sm text-(--color-muted)">
-    <a href={localizePath(routes.archive(), locale)} class="hover:text-(--color-fg)">
-      ← {t(locale, 'archive.title')}
-    </a>
-  </p>
-  <h1 class="mt-2 text-3xl font-semibold tracking-tight">{album.title}</h1>
-  {album.description && <p class="mt-2 max-w-2xl text-(--color-muted)">{album.description}</p>}
-  <div class="mt-8">
-    <ArchiveGrid items={album.items} />
-  </div>
+  <header class="page-head">
+    <h1 class="title">{album.title}</h1>
+    <p class="meta">
+      {t(locale, 'archive.albums')},{' '}
+      <a href={localizePath(routes.archive(), locale)} class="text-link">
+        {t(locale, 'archive.title')}
+      </a>
+    </p>
+    {album.description && <p class="lede">{album.description}</p>}
+  </header>
+  {photos.length > 0 && <PhotoWall photos={photos} locale={locale} />}
+  {links.length > 0 && (
+    <section aria-labelledby="album-links">
+      <div class="section__head">
+        <h2 id="album-links">{t(locale, 'archive.links')}</h2>
+      </div>
+      <LinkList links={links} />
+    </section>
+  )}
 </BaseLayout>

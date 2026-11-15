@@ -1,7 +1,9 @@
 ---
 import '@/styles/global.css';
 
-import Footer from '@/components/layout/Footer.astro';
+import BambooField from '@/components/layout/BambooField.astro';
+import FlameField from '@/components/layout/FlameField.astro';
+import KoiPond from '@/components/layout/KoiPond.astro';
 import Header from '@/components/layout/Header.astro';
 import Seo, { type SeoProps } from '@/components/seo/Seo.astro';
 import { LOCALE_META } from '@/i18n/config';
@@ -21,8 +23,23 @@ const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content={site.themeColor} />
+    <meta name="theme-color" content={site.themeColor.light} media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content={site.themeColor.dark} media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline>
+      // Before first paint: stored theme, "signed" (signature already drawn this visit), js flag.
+      (function () {
+        const root = document.documentElement;
+        root.classList.add('js');
+        try {
+          const theme = localStorage.getItem('theme');
+          if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
+          if (sessionStorage.getItem('signed')) root.classList.add('signed');
+        } catch {
+          /* storage blocked: system theme, signature draws */
+        }
+      })();
+    </script>
     <Seo {...props} />
     {import.meta.env.PROD && analyticsToken && (
       <script
@@ -33,17 +50,16 @@ const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
       />
     )}
   </head>
-  <body class="flex min-h-dvh flex-col">
-    <a
-      href="#main"
-      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-(--color-bg) focus:p-2"
-    >
+  <body>
+    <a href="#main" class="skip">
       {t(locale, 'skip')}
     </a>
-    <Header locale={locale} />
-    <main id="main" class="mx-auto w-full max-w-5xl flex-1 px-5 py-10">
-      <slot />
-    </main>
-    <Footer locale={locale} />
+    {site.backdrop === 'flame' ? <FlameField /> : site.backdrop === 'koi' ? <KoiPond /> : <BambooField />}
+    <div class="frame">
+      <Header locale={locale} />
+      <main id="main" class="page">
+        <slot />
+      </main>
+    </div>
   </body>
 </html>

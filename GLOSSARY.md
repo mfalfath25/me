@@ -1,6 +1,6 @@
 # Personal Site
 
-A one-person website for writing, photography, project showcases and interactive experiments, written and run entirely by its Owner.
+A one-person website for writing, photography, showcased works and interactive experiments, written and run entirely by its Owner.
 
 ## Language
 
@@ -17,7 +17,7 @@ _Avoid_: Admin, CMS, control room, dashboard, backend
 ### Languages
 
 **Translation**:
-The Indonesian version of a Post, Project or About page. English is always written first; Translations are optional per item.
+The Indonesian version of a Post, Work or About page. English is always written first; Translations are optional per item.
 _Avoid_: Localization, version
 
 **Fallback**:
@@ -55,15 +55,15 @@ An optional, named grouping of Archive items. Items can belong to several Albums
 _Avoid_: Collection, folder, set
 
 **Tag**:
-A shared label that can be attached to any piece of content (Posts, Photos, Projects) and connects them across sections.
+A shared label that can be attached to any piece of content (Posts, Photos, Works) and connects them across sections.
 _Avoid_: Category, topic, keyword
 
-**Project**:
-A real piece of work the Owner showcases, presented as a short overview plus a detailed write-up.
-_Avoid_: Work, portfolio item, case study
+**Work**:
+A real piece of work the Owner showcases, presented as a short overview plus a detailed write-up. Plural: Works.
+_Avoid_: Project, portfolio item, case study
 
 **Experiment**:
-A small interactive piece (CSS, Three.js, shader) that runs live on the page in the Playground. It is built in code, unlike Projects, which are written.
+A small interactive piece (CSS, Three.js, shader) that runs live on the page in the Playground. It is built in code, unlike Works, which are written.
 _Avoid_: Demo, toy, playground item
 
 **Playground**:

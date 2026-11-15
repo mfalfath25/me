@@ -1,0 +1,15 @@
+---
+/** The fire behind the page: a decorative WebGL canvas, filled by src/scripts/flame-field.ts. */
+---
+
+<canvas class="field" data-flame-field aria-hidden="true"></canvas>
+
+<script>
+  import { initFlameField } from '@/scripts/flame-field';
+
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-flame-field]');
+  if (canvas) {
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
+    idle(() => initFlameField(canvas));
+  }
+</script>

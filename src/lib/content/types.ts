@@ -57,19 +57,19 @@ export interface Post extends Publishable, Translatable {
   render: () => Promise<RenderedBody>;
 }
 
-export interface ProjectLink {
+export interface WorkLink {
   label: string;
   url: string;
 }
 
-export interface Project extends Publishable, Translatable {
+export interface Work extends Publishable, Translatable {
   title: string;
   summary: string;
   role: string | null;
   period: string | null;
   status: 'active' | 'shipped' | 'archived';
   stack: string[];
-  links: ProjectLink[];
+  links: WorkLink[];
   cover: ImageMetadata | null;
   coverAlt: string;
   featured: boolean;
@@ -131,7 +131,7 @@ export interface Page {
   render: () => Promise<RenderedBody>;
 }
 
-export type RefKind = 'post' | 'project' | 'photo' | 'link' | 'album' | 'tag' | 'series';
+export type RefKind = 'post' | 'work' | 'photo' | 'link' | 'album' | 'tag' | 'series';
 
 export interface ResolvedRef {
   href: string;

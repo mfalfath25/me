@@ -1,12 +1,12 @@
 ---
-import ArchiveGrid from '@/components/content/ArchiveGrid.astro';
+import PhotoWall from '@/components/content/PhotoWall.astro';
 import PostCard from '@/components/content/PostCard.astro';
-import ProjectCard from '@/components/content/ProjectCard.astro';
+import WorkCard from '@/components/content/WorkCard.astro';
 import type { Locale } from '@/i18n/config';
 import { alternatesFor, localizePath } from '@/i18n/paths';
 import { t } from '@/i18n/ui';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { listArchiveItems, listPosts, listProjects } from '@/lib/content';
+import { listArchiveItems, listPosts, listWorks, type Photo } from '@/lib/content';
 import { routes } from '@/lib/routes';
 import { personLd, websiteLd } from '@/lib/seo/jsonld';
 import { site } from '@/lib/site';
@@ -15,8 +15,9 @@ interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
-const [posts, archive, projects] = await Promise.all([listPosts(locale), listArchiveItems(), listProjects(locale)]);
-const featured = projects.filter((p) => p.featured);
+const [posts, archive, works] = await Promise.all([listPosts(locale), listArchiveItems(), listWorks(locale)]);
+const featured = works.filter((p) => p.featured);
+const photos = archive.filter((i): i is Photo => i.kind === 'photo');
 const origin = Astro.site!;
 ---
 
@@ -28,52 +29,45 @@ const origin = Astro.site!;
   type="profile"
   jsonLd={[websiteLd(origin, locale), personLd(origin)]}
 >
-  <section class="max-w-2xl">
-    <h1 class="text-3xl font-semibold tracking-tight">{site.name}</h1>
-    <p class="mt-3 text-(--color-muted)">{site.description[locale]}</p>
+  <section class="page-head page-head--one">
+    <h1 class="title">{site.description[locale]}</h1>
   </section>
 
-  <section class="mt-16" aria-labelledby="latest-writing">
-    <div class="flex items-baseline justify-between">
-      <h2 id="latest-writing" class="text-sm font-semibold uppercase tracking-wide">
-        {t(locale, 'home.latestWriting')}
-      </h2>
-      <a href={localizePath(routes.writing(), locale)} class="text-sm text-(--color-muted) hover:text-(--color-fg)">
-        {t(locale, 'home.seeAll')} →
+  <section aria-labelledby="latest-writing">
+    <div class="section__head">
+      <h2 id="latest-writing">{t(locale, 'home.latestWriting')}</h2>
+      <a href={localizePath(routes.writing(), locale)} class="section__more">
+        {t(locale, 'home.seeAll')}
       </a>
     </div>
-    <div class="divide-y divide-(--color-line)">
+    <div class="rows">
       {posts.slice(0, 3).map((post) => (
         <PostCard post={post} locale={locale} />
       ))}
     </div>
   </section>
 
-  <section class="mt-16" aria-labelledby="from-archive">
-    <div class="mb-4 flex items-baseline justify-between">
-      <h2 id="from-archive" class="text-sm font-semibold uppercase tracking-wide">
-        {t(locale, 'home.fromArchive')}
-      </h2>
-      <a href={localizePath(routes.archive(), locale)} class="text-sm text-(--color-muted) hover:text-(--color-fg)">
-        {t(locale, 'home.seeAll')} →
+  <section aria-labelledby="from-archive">
+    <div class="section__head">
+      <h2 id="from-archive">{t(locale, 'home.fromArchive')}</h2>
+      <a href={localizePath(routes.archive(), locale)} class="section__more">
+        {t(locale, 'home.seeAll')}
       </a>
     </div>
-    <ArchiveGrid items={archive.slice(0, 6)} eager={0} />
+    <PhotoWall photos={photos.slice(0, 6)} locale={locale} eager={0} />
   </section>
 
   {featured.length > 0 && (
-    <section class="mt-16" aria-labelledby="selected-projects">
-      <div class="mb-4 flex items-baseline justify-between">
-        <h2 id="selected-projects" class="text-sm font-semibold uppercase tracking-wide">
-          {t(locale, 'home.selectedProjects')}
-        </h2>
-        <a href={localizePath(routes.projects(), locale)} class="text-sm text-(--color-muted) hover:text-(--color-fg)">
-          {t(locale, 'home.seeAll')} →
+    <section aria-labelledby="selected-works">
+      <div class="section__head">
+        <h2 id="selected-works">{t(locale, 'home.selectedWorks')}</h2>
+        <a href={localizePath(routes.works(), locale)} class="section__more">
+          {t(locale, 'home.seeAll')}
         </a>
       </div>
-      <div class="grid gap-8 md:grid-cols-2">
-        {featured.slice(0, 4).map((project) => (
-          <ProjectCard project={project} locale={locale} />
+      <div class="works">
+        {featured.slice(0, 4).map((work) => (
+          <WorkCard work={work} locale={locale} />
         ))}
       </div>
     </section>

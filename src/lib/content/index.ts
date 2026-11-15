@@ -8,7 +8,7 @@
 export { getAlbumPaths, listAlbums, listArchiveItems, listLinks, listPhotos } from './archive';
 export { getAboutPage } from './pages';
 export { getPostPaths, listPosts, listPostsInSeries } from './posts';
-export { getProjectPaths, listProjects } from './projects';
+export { getWorkPaths, listWorks } from './works';
 export { resolveRef } from './refs';
 export { getSeriesPaths, getTagPaths, listSeries, listTags, type TaggedContent } from './taxonomy';
 export type * from './types';

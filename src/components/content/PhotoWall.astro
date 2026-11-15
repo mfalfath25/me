@@ -1,0 +1,93 @@
+---
+/**
+ * Photos as a masonry wall: each card keeps its photo's own proportions.
+ *
+ * At rest a card shows its photo as braille dots (src/scripts/dither.ts). On a hovering
+ * pointer the photo shows through and the card answers as `site.cardHover` says
+ * (src/scripts/photo-wall.ts): `pop` eases it up a little; `foil` lifts and tilts it toward the
+ * cursor under a glare and a sheen. A click morphs the card into the lightbox slideshow
+ * (src/scripts/lightbox.ts). Each card links to a large rendition, so without script it simply
+ * opens the image, and the plain photo shows instead of the dots. The photo's pixel size sits in a
+ * small plate at its top right.
+ */
+import { getImage } from 'astro:assets';
+
+import ResponsiveImage from '@/components/media/ResponsiveImage.astro';
+import type { Locale } from '@/i18n/config';
+import { t } from '@/i18n/ui';
+import type { Photo } from '@/lib/content';
+import { site } from '@/lib/site';
+
+interface Props {
+  photos: Photo[];
+  locale: Locale;
+  /** Number of images above the fold to load eagerly (LCP). */
+  eager?: number;
+}
+const { photos, locale, eager = 3 } = Astro.props;
+
+const large = new Map(
+  await Promise.all(
+    photos.map((photo) =>
+      getImage({ src: photo.image, width: Math.min(2000, photo.image.width), format: 'webp', quality: 80 }).then(
+        (img) => [photo.slug, img.src] as const,
+      ),
+    ),
+  ),
+);
+---
+
+<ul
+  class="wall"
+  data-photo-wall
+  data-hover={site.cardHover}
+  data-label-close={t(locale, 'lightbox.close')}
+  data-label-prev={t(locale, 'lightbox.prev')}
+  data-label-next={t(locale, 'lightbox.next')}
+>
+  {photos.map((photo, i) => (
+    <li id={`photo-${photo.slug}`} class="shot" data-location={photo.location ?? undefined}>
+      <figure class="shot__figure">
+        <a
+          href={large.get(photo.slug)}
+          class="shot__card"
+          style={`aspect-ratio: ${photo.image.width} / ${photo.image.height}`}
+          data-lightbox
+          data-title={photo.title}
+          data-place={photo.location ?? undefined}
+          data-w={photo.image.width}
+          data-h={photo.image.height}
+          aria-haspopup="dialog"
+        >
+          <ResponsiveImage
+            src={photo.image}
+            alt={photo.alt}
+            widths={[360, 720, 1080]}
+            sizes="(min-width: 768px) 360px, 50vw"
+            priority={i < eager}
+            class="shot__img"
+            pictureClass="shot__picture"
+          />
+          <canvas class="shot__dither" aria-hidden="true"></canvas>
+          <span class="shot__foil" aria-hidden="true"></span>
+          <span class="shot__glare" aria-hidden="true"></span>
+          <span class="shot__size" aria-hidden="true">
+            {photo.image.width}×{photo.image.height}
+          </span>
+        </a>
+        <figcaption class="shot__caption">
+          <span class="shot__title">{photo.title}</span>
+          {photo.location && <span class="shot__place">{photo.location}</span>}
+        </figcaption>
+      </figure>
+    </li>
+  ))}
+</ul>
+
+<script>
+  import { initLightbox } from '@/scripts/lightbox';
+  import { initPhotoWalls } from '@/scripts/photo-wall';
+
+  initPhotoWalls();
+  initLightbox();
+</script>

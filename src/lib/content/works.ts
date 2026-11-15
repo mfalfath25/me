@@ -3,11 +3,11 @@ import { getCollection, render } from 'astro:content';
 import type { Locale } from '@/i18n/config';
 
 import { isHidden, isVisible, pickLocalized, resolveTags } from './shared';
-import type { Project } from './types';
+import type { Work } from './types';
 
-export async function listProjects(locale: Locale): Promise<Project[]> {
-  const entries = await getCollection('projects', ({ data }) => isVisible(data));
-  const projects = await Promise.all(
+export async function listWorks(locale: Locale): Promise<Work[]> {
+  const entries = await getCollection('works', ({ data }) => isVisible(data));
+  const works = await Promise.all(
     pickLocalized(entries, locale).map(async ({ entry, slug, locale: shown, isFallback, availableLocales }) => {
       const d = entry.data;
       return {
@@ -30,13 +30,13 @@ export async function listProjects(locale: Locale): Promise<Project[]> {
         order: d.order,
         tags: await resolveTags(d.tags),
         render: () => render(entry),
-      } satisfies Project;
+      } satisfies Work;
     }),
   );
-  return projects.sort((a, b) => a.order - b.order || b.publishedAt.getTime() - a.publishedAt.getTime());
+  return works.sort((a, b) => a.order - b.order || b.publishedAt.getTime() - a.publishedAt.getTime());
 }
 
-export async function getProjectPaths(locale: Locale) {
-  const projects = await listProjects(locale);
-  return projects.map((project) => ({ params: { slug: project.slug }, props: { project } }));
+export async function getWorkPaths(locale: Locale) {
+  const works = await listWorks(locale);
+  return works.map((work) => ({ params: { slug: work.slug }, props: { work } }));
 }

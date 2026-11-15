@@ -2,14 +2,14 @@ import type { Locale } from '@/i18n/config';
 
 import { listArchiveItems } from './archive';
 import { listPosts, listPostsInSeries } from './posts';
-import { listProjects } from './projects';
+import { listWorks } from './works';
 import { getSeriesMap, getTagMap } from './shared';
-import type { ArchiveItem, Post, Project, Series, Tag } from './types';
+import type { ArchiveItem, Post, Work, Series, Tag } from './types';
 
 export interface TaggedContent {
   tag: Tag;
   posts: Post[];
-  projects: Project[];
+  works: Work[];
   archive: ArchiveItem[];
 }
 
@@ -22,20 +22,20 @@ export async function listTags(): Promise<Tag[]> {
 
 /** One path per tag that has at least one visible item. */
 export async function getTagPaths(locale: Locale) {
-  const [tags, posts, projects, archive] = await Promise.all([
+  const [tags, posts, works, archive] = await Promise.all([
     listTags(),
     listPosts(locale),
-    listProjects(locale),
+    listWorks(locale),
     listArchiveItems(),
   ]);
   return tags
     .map((tag) => ({
       tag,
       posts: posts.filter(hasTag(tag.slug)),
-      projects: projects.filter(hasTag(tag.slug)),
+      works: works.filter(hasTag(tag.slug)),
       archive: archive.filter(hasTag(tag.slug)),
     }))
-    .filter((c) => c.posts.length + c.projects.length + c.archive.length > 0)
+    .filter((c) => c.posts.length + c.works.length + c.archive.length > 0)
     .map((content) => ({ params: { slug: content.tag.slug }, props: { content: content satisfies TaggedContent } }));
 }
 

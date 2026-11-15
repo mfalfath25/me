@@ -1,12 +1,13 @@
 ---
 import { getImage } from 'astro:assets';
 
-import ArchiveGrid from '@/components/content/ArchiveGrid.astro';
+import LinkList from '@/components/content/LinkList.astro';
+import PhotoWall from '@/components/content/PhotoWall.astro';
 import type { Locale } from '@/i18n/config';
 import { alternatesFor, localizePath } from '@/i18n/paths';
 import { t } from '@/i18n/ui';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { listAlbums, listArchiveItems } from '@/lib/content';
+import { type Link, listAlbums, listArchiveItems, type Photo } from '@/lib/content';
 import { routes } from '@/lib/routes';
 import { breadcrumbLd, imageGalleryLd } from '@/lib/seo/jsonld';
 
@@ -16,7 +17,8 @@ interface Props {
 const { locale } = Astro.props;
 const [items, albums] = await Promise.all([listArchiveItems(), listAlbums()]);
 const title = t(locale, 'archive.title');
-const photos = items.filter((i) => i.kind === 'photo');
+const photos = items.filter((i): i is Photo => i.kind === 'photo');
+const links = items.filter((i): i is Link => i.kind === 'link');
 const galleryImages = await Promise.all(
   photos.slice(0, 50).map(async (p) => ({
     src: (await getImage({ src: p.image, width: 1600, format: 'jpeg' })).src,
@@ -38,27 +40,32 @@ const galleryImages = await Promise.all(
     breadcrumbLd(Astro.site!, [{ name: title, path: Astro.url.pathname }]),
   ]}
 >
-  <h1 class="text-3xl font-semibold tracking-tight">{title}</h1>
-  <p class="mt-2 text-(--color-muted)">{t(locale, 'archive.description')}</p>
+  <header class="page-head">
+    <h1 class="title">{title}</h1>
+    <p class="lede">{t(locale, 'archive.description')}</p>
+    {albums.length > 0 && (
+      <nav aria-label={t(locale, 'archive.albums')}>
+        <ul class="inline-list">
+          <li class="meta">{t(locale, 'archive.albums')}</li>
+          {albums.map((album) => (
+            <li>
+              <a href={localizePath(routes.album(album.slug), locale)}>
+                {album.title} <span class="count">{album.items.length}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+  </header>
 
-  {albums.length > 0 && (
-    <nav aria-label={t(locale, 'archive.albums')} class="mt-8 text-sm">
-      <ul class="flex flex-wrap gap-2">
-        {albums.map((album) => (
-          <li>
-            <a
-              href={localizePath(routes.album(album.slug), locale)}
-              class="rounded-full border border-(--color-line) px-3 py-1 hover:border-(--color-fg)"
-            >
-              {album.title} <span class="text-(--color-muted)">{album.items.length}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
+  {photos.length > 0 && <PhotoWall photos={photos} locale={locale} />}
+  {links.length > 0 && (
+    <section aria-labelledby="archive-links">
+      <div class="section__head">
+        <h2 id="archive-links">{t(locale, 'archive.links')}</h2>
+      </div>
+      <LinkList links={links} />
+    </section>
   )}
-
-  <div class="mt-8">
-    <ArchiveGrid items={items} />
-  </div>
 </BaseLayout>

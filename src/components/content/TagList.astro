@@ -12,15 +12,10 @@ const { tags, locale } = Astro.props;
 ---
 
 {tags.length > 0 && (
-  <ul class="flex flex-wrap gap-2 text-xs">
+  <ul class="inline-list">
     {tags.map((tag) => (
       <li>
-        <a
-          href={localizePath(routes.tag(tag.slug), locale)}
-          class="rounded-full border border-(--color-line) px-2.5 py-1 text-(--color-muted) hover:text-(--color-fg)"
-        >
-          #{tag.name}
-        </a>
+        <a href={localizePath(routes.tag(tag.slug), locale)}>#{tag.name}</a>
       </li>
     ))}
   </ul>

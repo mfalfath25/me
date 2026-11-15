@@ -1,6 +1,6 @@
 # me
 
-Personal site: writing, photographs, projects. Astro + Keystatic on Cloudflare.
+Personal site: writing, photographs, works. Astro + Keystatic on Cloudflare.
 
 ```sh
 pnpm install

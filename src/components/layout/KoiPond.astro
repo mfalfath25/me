@@ -1,0 +1,15 @@
+---
+/** The koi pond behind the page, in ASCII: a decorative canvas, filled by src/scripts/koi-pond.ts. */
+---
+
+<canvas class="field" data-koi-pond aria-hidden="true"></canvas>
+
+<script>
+  import { initKoiPond } from '@/scripts/koi-pond';
+
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-koi-pond]');
+  if (canvas) {
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
+    idle(() => initKoiPond(canvas));
+  }
+</script>

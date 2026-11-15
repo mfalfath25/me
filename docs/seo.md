@@ -17,7 +17,7 @@ Everything flows through `BaseLayout` props into `src/components/seo/Seo.astro`.
 | Home                  | `WebSite`, `Person`                                                         |
 | About                 | `ProfilePage` → `Person`                                                    |
 | Post                  | `BlogPosting`, `BreadcrumbList`                                             |
-| Project               | `CreativeWork`, `BreadcrumbList`                                            |
+| Work                  | `CreativeWork`, `BreadcrumbList`                                            |
 | Archive, Album        | `ImageGallery` of `ImageObject` (with creator and credit), `BreadcrumbList` |
 | Indexes, tags, series | `BreadcrumbList`                                                            |
 

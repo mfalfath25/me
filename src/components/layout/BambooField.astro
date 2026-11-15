@@ -1,0 +1,15 @@
+---
+/** Bamboo behind the page, dithered: a decorative canvas, filled by src/scripts/bamboo-field.ts. */
+---
+
+<canvas class="field" data-bamboo-field aria-hidden="true"></canvas>
+
+<script>
+  import { initBambooField } from '@/scripts/bamboo-field';
+
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-bamboo-field]');
+  if (canvas) {
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
+    idle(() => initBambooField(canvas));
+  }
+</script>

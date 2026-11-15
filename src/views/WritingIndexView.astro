@@ -24,25 +24,24 @@ const title = t(locale, 'writing.title');
   alternates={alternatesFor(Astro.url.pathname)}
   jsonLd={[breadcrumbLd(Astro.site!, [{ name: title, path: Astro.url.pathname }])]}
 >
-  <h1 class="text-3xl font-semibold tracking-tight">{title}</h1>
-  <p class="mt-2 text-(--color-muted)">{t(locale, 'writing.description')}</p>
+  <header class="page-head">
+    <h1 class="title">{title}</h1>
+    <p class="lede">{t(locale, 'writing.description')}</p>
+    {series.length > 0 && (
+      <nav aria-label={t(locale, 'writing.series')}>
+        <ul class="inline-list">
+          <li class="meta">{t(locale, 'writing.series')}</li>
+          {series.map((s) => (
+            <li>
+              <a href={localizePath(routes.series(s.slug), locale)}>{s.title}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+  </header>
 
-  {series.length > 0 && (
-    <nav aria-label={t(locale, 'writing.series')} class="mt-8 text-sm">
-      <h2 class="font-semibold">{t(locale, 'writing.series')}</h2>
-      <ul class="mt-2 flex flex-wrap gap-3">
-        {series.map((s) => (
-          <li>
-            <a href={localizePath(routes.series(s.slug), locale)} class="underline underline-offset-4">
-              {s.title}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  )}
-
-  <div class="mt-8 divide-y divide-(--color-line)">
+  <div class="rows">
     {posts.map((post) => (
       <PostCard post={post} locale={locale} />
     ))}

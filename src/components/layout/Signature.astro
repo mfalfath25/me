@@ -1,0 +1,33 @@
+---
+/**
+ * The Owner's mark, the home link at the top of the rail: one angular silhouette (a top bar and a
+ * bottom bar joined by a diagonal), traced from the Owner's logo and made point-symmetric about
+ * its centre. Filled with a vertical gradient (deep at the top, bright at the bottom) inside an
+ * edge with its own gradient; the four stops are --color-mark-* tokens, so it follows the theme.
+ * On the first page of a visit the edge draws itself and the fill comes up behind it. Styles live
+ * in global.css (.signature).
+ */
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+
+// Upper half, then the same points turned half a circle about (284, 288).
+const d =
+  'M106 144H272L322 220L373 144H462L378 290H292L260 342H408L462 432H296L246 356L195 432H106L190 286H276L308 234H160Z';
+---
+
+<svg class="signature" viewBox="96 134 376 308" role="img" aria-label={title}>
+  <defs>
+    <linearGradient id="mark-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" class="signature__stop-top"></stop>
+      <stop offset="1" class="signature__stop-bottom"></stop>
+    </linearGradient>
+    <linearGradient id="mark-edge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" class="signature__edge-top"></stop>
+      <stop offset="1" class="signature__edge-bottom"></stop>
+    </linearGradient>
+  </defs>
+  <path class="signature__fill" d={d}></path>
+  <path class="signature__edge" d={d} pathLength="1"></path>
+</svg>

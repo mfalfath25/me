@@ -1,0 +1,110 @@
+---
+import { getImage } from 'astro:assets';
+
+import ResponsiveImage from '@/components/media/ResponsiveImage.astro';
+import TagList from '@/components/content/TagList.astro';
+import TranslationNotice from '@/components/content/TranslationNotice.astro';
+import type { Locale } from '@/i18n/config';
+import { localizePath } from '@/i18n/paths';
+import { t } from '@/i18n/ui';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import type { Work } from '@/lib/content';
+import { routes } from '@/lib/routes';
+import { breadcrumbLd, creativeWorkLd } from '@/lib/seo/jsonld';
+
+interface Props {
+  work: Work;
+  locale: Locale;
+}
+const { work, locale } = Astro.props;
+const { Content } = await work.render();
+const origin = Astro.site!;
+const path = localizePath(routes.work(work.slug), locale);
+const alternates = Object.fromEntries(work.availableLocales.map((l) => [l, localizePath(routes.work(work.slug), l)]));
+const coverForLd = work.cover ? (await getImage({ src: work.cover, width: 1200, format: 'jpeg' })).src : null;
+
+const facts = [
+  work.role && { label: t(locale, 'works.role'), value: work.role },
+  work.period && { label: t(locale, 'works.period'), value: work.period },
+  work.stack.length > 0 && { label: t(locale, 'works.stack'), value: work.stack.join(', ') },
+].filter(Boolean) as { label: string; value: string }[];
+---
+
+<BaseLayout
+  title={work.title}
+  description={work.summary}
+  locale={locale}
+  alternates={alternates}
+  canonicalPath={work.isFallback ? localizePath(routes.work(work.slug), work.locale) : undefined}
+  noindex={work.isFallback || work.isHidden}
+  image={work.cover}
+  imageAlt={work.coverAlt}
+  type="article"
+  publishedAt={work.publishedAt}
+  tags={work.tags.map((tag) => tag.name)}
+  jsonLd={[
+    creativeWorkLd(origin, {
+      title: work.title,
+      description: work.summary,
+      path,
+      locale: work.locale,
+      image: coverForLd,
+      tags: work.tags.map((tag) => tag.name),
+    }),
+    breadcrumbLd(origin, [
+      { name: t(locale, 'works.title'), path: localizePath(routes.works(), locale) },
+      { name: work.title, path },
+    ]),
+  ]}
+>
+  <article class="article" lang={work.locale}>
+    {work.isFallback && <TranslationNotice locale={locale} />}
+    <!-- Overview -->
+    <header class="article__head">
+      <h1 class="title">{work.title}</h1>
+      <p class="meta">{t(locale, `works.status.${work.status}`)}</p>
+      <p class="lede">{work.summary}</p>
+      {facts.length > 0 && (
+        <dl class="facts">
+          {facts.map((f) => (
+            <>
+              <dt>{f.label}</dt>
+              <dd>{f.value}</dd>
+            </>
+          ))}
+        </dl>
+      )}
+      {work.links.length > 0 && (
+        <ul class="inline-list">
+          {work.links.map((link) => (
+            <li>
+              <a href={link.url} rel="noopener" target="_blank" class="text-link">
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </header>
+
+    {work.cover && (
+      <ResponsiveImage
+        src={work.cover}
+        alt={work.coverAlt}
+        widths={[640, 1024, 1600]}
+        sizes="(min-width: 1024px) 960px, 100vw"
+        priority
+        class="article__cover"
+      />
+    )}
+
+    <!-- Details -->
+    <div class="prose article__body">
+      <Content />
+    </div>
+
+    <footer class="article__foot">
+      <TagList tags={work.tags} locale={locale} />
+    </footer>
+  </article>
+</BaseLayout>

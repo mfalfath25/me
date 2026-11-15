@@ -12,7 +12,7 @@ const CONTENT_ROOT = fileURLToPath(new URL('../content/', import.meta.url));
 
 const TRANSLATABLE = [
   { dir: 'posts', route: '/writing' },
-  { dir: 'projects', route: '/projects' },
+  { dir: 'works', route: '/works' },
 ] as const;
 
 function slugs(dir: string): string[] {

@@ -1,0 +1,9 @@
+---
+import { getWorkPaths } from '@/lib/content';
+import WorkView from '@/views/WorkView.astro';
+
+export const getStaticPaths = () => getWorkPaths('id');
+const { work } = Astro.props;
+---
+
+<WorkView work={work} locale="id" />

@@ -18,14 +18,14 @@ const assets = (sub: string, depth = 3) => ({
 
 const refComponent = inline({
   label: 'Internal link',
-  description: 'Link to another Post, Project, Photo, Link, Album, Tag or Series',
+  description: 'Link to another Post, Work, Photo, Link, Album, Tag or Series',
   schema: {
     kind: fields.select({
       label: 'Kind',
       defaultValue: 'post',
       options: [
         { label: 'Post', value: 'post' },
-        { label: 'Project', value: 'project' },
+        { label: 'Work', value: 'work' },
         { label: 'Photo', value: 'photo' },
         { label: 'Link', value: 'link' },
         { label: 'Album', value: 'album' },
@@ -88,8 +88,8 @@ const postSchema = (translation: boolean) => ({
   body: body('Body', 'posts'),
 });
 
-// ── Projects ──────────────────────────────────────────────────────────
-const projectSchema = (translation: boolean) => ({
+// ── Works ──────────────────────────────────────────────────────────
+const workSchema = (translation: boolean) => ({
   title: titleAndSlug(translation),
   summary: fields.text({
     label: 'Overview',
@@ -120,12 +120,12 @@ const projectSchema = (translation: boolean) => ({
     }),
     { label: 'Links', itemLabel: (p) => p.fields.label.value },
   ),
-  cover: fields.image({ label: 'Cover image', ...assets('projects') }),
+  cover: fields.image({ label: 'Cover image', ...assets('works') }),
   coverAlt: fields.text({ label: 'Cover alt text' }),
   featured: fields.checkbox({ label: 'Featured on home page', defaultValue: false }),
   order: fields.integer({ label: 'Sort order (lower first)', defaultValue: 100 }),
   tags: tagsField,
-  body: body('Details', 'projects'),
+  body: body('Details', 'works'),
 });
 
 export default config({
@@ -135,7 +135,7 @@ export default config({
     navigation: {
       Writing: ['postsEn', 'postsId', 'series'],
       Archive: ['photos', 'links', 'albums'],
-      Projects: ['projectsEn', 'projectsId'],
+      Works: ['worksEn', 'worksId'],
       Site: ['tags', 'aboutEn', 'aboutId'],
     },
   },
@@ -168,23 +168,23 @@ export default config({
         description: fields.text({ label: 'Description', multiline: true }),
       },
     }),
-    projectsEn: collection({
-      label: 'Projects · English',
-      path: 'src/content/projects/en/*',
+    worksEn: collection({
+      label: 'Works · English',
+      path: 'src/content/works/en/*',
       slugField: 'title',
       format: { contentField: 'body' },
       entryLayout: 'content',
       columns: ['title', 'status'],
-      schema: projectSchema(false),
+      schema: workSchema(false),
     }),
-    projectsId: collection({
-      label: 'Projects · Indonesian',
-      path: 'src/content/projects/id/*',
+    worksId: collection({
+      label: 'Works · Indonesian',
+      path: 'src/content/works/id/*',
       slugField: 'title',
       format: { contentField: 'body' },
       entryLayout: 'content',
       columns: ['title', 'status'],
-      schema: projectSchema(true),
+      schema: workSchema(true),
     }),
     photos: collection({
       label: 'Photos',

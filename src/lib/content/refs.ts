@@ -4,7 +4,7 @@ import { routes } from '@/lib/routes';
 
 import { listAlbums, listLinks, listPhotos } from './archive';
 import { listPosts } from './posts';
-import { listProjects } from './projects';
+import { listWorks } from './works';
 import { getSeriesMap, getTagMap } from './shared';
 import type { RefKind, ResolvedRef } from './types';
 
@@ -28,9 +28,9 @@ async function find(kind: RefKind, slug: string, locale: Locale): Promise<{ path
       const p = pick(await listPosts(locale));
       return p && { path: routes.post(slug), title: p.title };
     }
-    case 'project': {
-      const p = pick(await listProjects(locale));
-      return p && { path: routes.project(slug), title: p.title };
+    case 'work': {
+      const p = pick(await listWorks(locale));
+      return p && { path: routes.work(slug), title: p.title };
     }
     case 'photo': {
       const p = pick(await listPhotos());

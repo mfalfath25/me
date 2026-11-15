@@ -8,6 +8,6 @@ interface Props {
 const { locale } = Astro.props;
 ---
 
-<p role="note" class="mb-8 rounded-md border border-(--color-line) px-4 py-3 text-sm text-(--color-muted)">
+<p role="note" class="notice">
   {t(locale, 'translation.unavailable')}
 </p>

@@ -2,7 +2,7 @@
 
 Terms are defined in `GLOSSARY.md`. Field lists below match `keystatic.config.ts` and `src/content.config.ts`; keep all three in sync.
 
-Common to Posts, Projects, Photos and Links: `publishedAt` (date; future dates stay hidden until that day's scheduled rebuild) and `draft` (never published). In `pnpm dev` everything is visible and marked.
+Common to Posts, Works, Photos and Links: `publishedAt` (date; future dates stay hidden until that day's scheduled rebuild) and `draft` (never published). In `pnpm dev` everything is visible and marked.
 
 ## Post: `src/content/posts/{en,id}/<slug>.mdoc`
 
@@ -16,7 +16,7 @@ Common to Posts, Projects, Photos and Links: `publishedAt` (date; future dates s
 | series, seriesOrder | Optional Series membership and position                     |
 | body                | Markdoc. Images go to `src/assets/posts/`.                  |
 
-## Project: `src/content/projects/{en,id}/<slug>.mdoc`
+## Work: `src/content/works/{en,id}/<slug>.mdoc`
 
 Overview fields: `title`, `summary`, `role`, `period`, `status` (active/shipped/archived), `stack[]`, `links[{label,url}]`, `cover`, `coverAlt`, `featured` (home page), `order`, `tags`. The Markdoc body is the detailed section.
 
@@ -53,4 +53,4 @@ Singletons: `title`, `description`, body.
 
 ## Internal links
 
-Inside any Markdoc body: `{% ref kind="post" slug="hello-world" /%}` (optionally `label="…"`). Kinds: post, project, photo, link, album, tag, series. In the Studio, insert it with the **Internal link** component. Broken references fail the build. These links are also the data for a future connection graph.
+Inside any Markdoc body: `{% ref kind="post" slug="hello-world" /%}` (optionally `label="…"`). Kinds: post, work, photo, link, album, tag, series. In the Studio, insert it with the **Internal link** component. Broken references fail the build. These links are also the data for a future connection graph.

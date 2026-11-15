@@ -35,8 +35,8 @@ const posts = defineCollection({
     }),
 });
 
-const projects = defineCollection({
-  loader: glob({ pattern: '{en,id}/*.mdoc', base: './src/content/projects' }),
+const works = defineCollection({
+  loader: glob({ pattern: '{en,id}/*.mdoc', base: './src/content/works' }),
   schema: ({ image }) =>
     z.object({
       title: z.string(),
@@ -137,4 +137,4 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { posts, projects, photos, links, albums, tags, series, pages };
+export const collections = { posts, works, photos, links, albums, tags, series, pages };

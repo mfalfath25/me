@@ -1,0 +1,23 @@
+---
+/** Links from the Archive, kept apart from the photos: one text row each, site then title and note. */
+import type { Link } from '@/lib/content';
+
+interface Props {
+  links: Link[];
+}
+const { links } = Astro.props;
+---
+
+<ul class="links">
+  {links.map((link) => (
+    <li id={`link-${link.slug}`}>
+      <a href={link.url} rel="noopener" target="_blank" class="links__link">
+        <span class="links__site">{link.siteName ?? link.host}</span>
+        <span class="links__body">
+          <span class="links__title">{link.title}</span>
+          {(link.note ?? link.description) && <span class="links__note">{link.note ?? link.description}</span>}
+        </span>
+      </a>
+    </li>
+  ))}
+</ul>

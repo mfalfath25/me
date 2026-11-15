@@ -1,0 +1,66 @@
+---
+/**
+ * Light / dark switch. The choice is stored in localStorage and applied before first paint by
+ * the inline script in BaseLayout; with no choice stored the page follows the system setting.
+ * Hidden when scripting is off (see `[data-theme-switch]` in global.css).
+ */
+import type { Locale } from '@/i18n/config';
+import { t } from '@/i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+---
+
+<div class="switch" role="group" aria-label={t(locale, 'theme.label')} data-theme-switch>
+  <button type="button" class="switch__opt" data-set-theme="light" aria-pressed="false">
+    {t(locale, 'theme.light')}
+  </button>
+  <button type="button" class="switch__opt" data-set-theme="dark" aria-pressed="false">
+    {t(locale, 'theme.dark')}
+  </button>
+</div>
+
+<script>
+  type Theme = 'light' | 'dark';
+  const root = document.documentElement;
+  const system = window.matchMedia('(prefers-color-scheme: dark)');
+
+  const current = (): Theme =>
+    root.dataset.theme === 'dark' || root.dataset.theme === 'light'
+      ? root.dataset.theme
+      : system.matches
+        ? 'dark'
+        : 'light';
+
+  const sync = () => {
+    const theme = current();
+    document.querySelectorAll<HTMLButtonElement>('[data-set-theme]').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.setTheme === theme));
+    });
+  };
+
+  document.querySelectorAll<HTMLButtonElement>('[data-set-theme]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const theme = button.dataset.setTheme as Theme;
+      if (theme === current()) return;
+      const apply = () => {
+        root.dataset.theme = theme;
+        try {
+          localStorage.setItem('theme', theme);
+        } catch {
+          /* storage blocked: the choice lasts for this page only */
+        }
+        sync();
+      };
+      // A short crossfade, so the switch reads as one change rather than a flash.
+      const quiet = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (document.startViewTransition && !quiet) document.startViewTransition(apply);
+      else apply();
+    });
+  });
+
+  system.addEventListener('change', sync);
+  sync();
+</script>

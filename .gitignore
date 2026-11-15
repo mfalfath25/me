@@ -95,3 +95,6 @@ $RECYCLE.BIN/
 tmp/
 .tmp/
 *.tmp
+
+# Design-lint screenshots and records
+.hallmark/

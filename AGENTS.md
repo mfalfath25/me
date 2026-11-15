@@ -4,7 +4,7 @@ Guide for AI agents (and humans) working in this repo. Read this first, then `GL
 
 ## What this is
 
-A one-person personal site: **Posts** (writing), the **Archive** (Photos + Links, optionally grouped in Albums), **Projects**, and later a **Playground** of Experiments. Bilingual: English at `/`, Indonesian at `/id`. The Owner edits everything in the **Studio** (Keystatic) at `/keystatic`.
+A one-person personal site: **Posts** (writing), the **Archive** (Photos + Links, optionally grouped in Albums), **Works**, and later a **Playground** of Experiments. Bilingual: English at `/`, Indonesian at `/id`. The Owner edits everything in the **Studio** (Keystatic) at `/keystatic`.
 
 Use the words in `GLOSSARY.md` for names in code, UI and docs. If you need a new domain term, add it there first.
 
@@ -64,10 +64,11 @@ docs/                    Architecture, content model, pipelines, ADRs
 ## Docs
 
 - `docs/architecture.md`: how the pieces fit
+- `docs/design.md`: the grid sheet, layers, tokens and motion rules
 - `docs/content-model.md`: every content type and field
 - `docs/image-pipeline.md`, `docs/i18n.md`, `docs/seo.md`, `docs/deployment.md`
 - `docs/adr/`: why things are the way they are. Read before "fixing" something that looks odd.
 
 ## Not built yet
 
-Design pass (visual identity, animated archive gallery and lightbox, blur placeholders) · Playground and Experiments · Pagefind search · generated share images for pages without a cover · Cloudflare Access with Google (needs a custom domain).
+Blur placeholders for images · Playground and Experiments · Pagefind search · generated share images for pages without a cover · Cloudflare Access with Google (needs a custom domain).

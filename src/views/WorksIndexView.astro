@@ -1,0 +1,34 @@
+---
+import WorkCard from '@/components/content/WorkCard.astro';
+import type { Locale } from '@/i18n/config';
+import { alternatesFor } from '@/i18n/paths';
+import { t } from '@/i18n/ui';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { listWorks } from '@/lib/content';
+import { breadcrumbLd } from '@/lib/seo/jsonld';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const works = await listWorks(locale);
+const title = t(locale, 'works.title');
+---
+
+<BaseLayout
+  title={title}
+  description={t(locale, 'works.description')}
+  locale={locale}
+  alternates={alternatesFor(Astro.url.pathname)}
+  jsonLd={[breadcrumbLd(Astro.site!, [{ name: title, path: Astro.url.pathname }])]}
+>
+  <header class="page-head">
+    <h1 class="title">{title}</h1>
+    <p class="lede">{t(locale, 'works.description')}</p>
+  </header>
+  <div class="works">
+    {works.map((work) => (
+      <WorkCard work={work} locale={locale} />
+    ))}
+  </div>
+</BaseLayout>

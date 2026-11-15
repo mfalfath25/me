@@ -28,10 +28,17 @@ const { series, posts, locale } = Astro.props;
     ]),
   ]}
 >
-  <p class="text-sm text-(--color-muted)">{t(locale, 'writing.series')}</p>
-  <h1 class="mt-1 text-3xl font-semibold tracking-tight">{series.title}</h1>
-  {series.description && <p class="mt-2 max-w-2xl text-(--color-muted)">{series.description}</p>}
-  <ol class="mt-8 divide-y divide-(--color-line)">
+  <header class="page-head">
+    <h1 class="title">{series.title}</h1>
+    <p class="meta">
+      {t(locale, 'writing.series')},{' '}
+      <a href={localizePath(routes.writing(), locale)} class="text-link">
+        {t(locale, 'writing.title')}
+      </a>
+    </p>
+    {series.description && <p class="lede">{series.description}</p>}
+  </header>
+  <ol class="rows">
     {posts.map((post) => (
       <li>
         <PostCard post={post} locale={locale} />

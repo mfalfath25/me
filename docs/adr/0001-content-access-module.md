@@ -1,6 +1,6 @@
 # All content reads go through one module
 
-Content is stored as files today (see ADR 0002), but the Owner may move to a database later. Pages and components therefore never touch `astro:content` or the files directly; they call functions in `src/lib/content/` that return plain domain types (`Post`, `Photo`, `Project`…). A move to a database means re-implementing that module; no page changes. ESLint enforces this with `no-restricted-imports` on `astro:content` outside the module.
+Content is stored as files today (see ADR 0002), but the Owner may move to a database later. Pages and components therefore never touch `astro:content` or the files directly; they call functions in `src/lib/content/` that return plain domain types (`Post`, `Photo`, `Work`…). A move to a database means re-implementing that module; no page changes. ESLint enforces this with `no-restricted-imports` on `astro:content` outside the module.
 
 ## Consequences
 
