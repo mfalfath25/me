@@ -1,0 +1,18 @@
+---
+/** Renders `{% ref kind="…" slug="…" /%}` from Markdoc. A broken ref throws and fails the build. */
+import { DEFAULT_LOCALE, isLocale } from '@/i18n/config';
+import { resolveRef, type RefKind } from '@/lib/content';
+
+interface Props {
+  kind: RefKind;
+  slug: string;
+  label?: string;
+}
+const { kind, slug, label } = Astro.props;
+const locale = isLocale(Astro.currentLocale) ? Astro.currentLocale : DEFAULT_LOCALE;
+const { href, title } = await resolveRef(kind, slug, locale);
+---
+
+<a href={href} data-ref={kind}>
+  {label || title}
+</a>

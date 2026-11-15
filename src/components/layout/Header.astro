@@ -1,0 +1,42 @@
+---
+import type { Locale } from '@/i18n/config';
+import { localizePath, splitLocale } from '@/i18n/paths';
+import { t } from '@/i18n/ui';
+import { routes } from '@/lib/routes';
+import { site } from '@/lib/site';
+
+import LanguageToggle from './LanguageToggle.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const current = splitLocale(Astro.url.pathname).path;
+
+const nav = [
+  { href: routes.writing(), label: t(locale, 'nav.writing') },
+  { href: routes.archive(), label: t(locale, 'nav.archive') },
+  { href: routes.projects(), label: t(locale, 'nav.projects') },
+  { href: routes.about(), label: t(locale, 'nav.about') },
+];
+---
+
+<header class="border-b border-(--color-line)">
+  <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
+    <a href={localizePath('/', locale)} class="font-semibold">
+      {site.name}
+    </a>
+    <nav aria-label="Main" class="flex items-center gap-5 text-sm">
+      {nav.map((item) => (
+        <a
+          href={localizePath(item.href, locale)}
+          aria-current={current === item.href || current.startsWith(`${item.href}/`) ? 'page' : undefined}
+          class="text-(--color-muted) hover:text-(--color-fg) aria-[current=page]:text-(--color-fg)"
+        >
+          {item.label}
+        </a>
+      ))}
+      <LanguageToggle locale={locale} />
+    </nav>
+  </div>
+</header>

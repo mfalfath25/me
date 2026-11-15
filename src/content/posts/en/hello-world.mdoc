@@ -1,0 +1,55 @@
+---
+title: Hello, world
+description: A first post to exercise every kind of formatting this site supports, from headings and lists to images, code, tables and internal links.
+publishedAt: 2026-11-15
+cover: ../../../assets/posts/hello-world/cover.jpg
+coverAlt: A wooden footbridge leading into dense green rainforest
+tags:
+  - notes
+  - web
+series: building-this-site
+seriesOrder: 1
+draft: false
+---
+This is the first post on the site. It exists mostly to show what a Post can contain, so every common format appears at least once below.
+
+## Text
+
+Paragraphs support **bold**, _italic_, ~~strikethrough~~, `inline code` and [external links](https://astro.build). Internal links use a reference that the build checks, like this one to {% ref kind="project" slug="this-site" /%}, or this one to the {% ref kind="album" slug="mountains-and-mist" label="mountains album" /%}.
+
+> A blockquote, for when someone else said it better.
+
+## Lists
+
+- Unordered lists
+- With several items
+  - And nesting
+
+1. Ordered lists
+2. Count for you
+
+## Images
+
+Images placed inside a Post live next to it in the repo and are resized and converted to modern formats when the site builds.
+
+![Sunlight falling through tall trees onto a forest path](../../../assets/posts/hello-world/forest.jpg)
+
+## Code
+
+```ts
+export function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+```
+
+## Tables
+
+| Section  | What lives there        |
+| -------- | ----------------------- |
+| Writing  | Posts and Series        |
+| Archive  | Photos, Links, Albums   |
+| Projects | Showcased work          |
+
+---
+
+That is everything. The next post in this series covers {% ref kind="post" slug="choosing-the-stack" /%}.

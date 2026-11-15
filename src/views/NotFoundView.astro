@@ -1,0 +1,19 @@
+---
+import type { Locale } from '@/i18n/config';
+import { localizePath } from '@/i18n/paths';
+import { t } from '@/i18n/ui';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+---
+
+<BaseLayout title={t(locale, 'notFound.title')} description={t(locale, 'notFound.body')} locale={locale} noindex>
+  <h1 class="text-3xl font-semibold tracking-tight">{t(locale, 'notFound.title')}</h1>
+  <p class="mt-2 text-(--color-muted)">{t(locale, 'notFound.body')}</p>
+  <a href={localizePath('/', locale)} class="mt-6 inline-block underline underline-offset-4">
+    {t(locale, 'notFound.home')}
+  </a>
+</BaseLayout>

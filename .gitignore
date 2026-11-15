@@ -1,0 +1,97 @@
+# ── Dependencies ──────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+.yarn/
+!.yarn/releases
+.yarn-integrity
+.npm/
+
+# ── Build output ──────────────────────────────────────────────
+dist/
+build/
+out/
+.output/
+
+# ── Astro ─────────────────────────────────────────────────────
+# Generated types, content data store, keystatic imports
+.astro/
+
+# ── Cloudflare / Wrangler ─────────────────────────────────────
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+worker-configuration.d.ts
+
+# ── Other hosting CLIs (in case they are ever tried) ─────────
+.vercel/
+.netlify/
+
+# ── Search index (Pagefind, generated at build) ───────────────
+pagefind/
+public/pagefind/
+
+# ── Env & secrets ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ── Caches ────────────────────────────────────────────────────
+.cache/
+.eslintcache
+.prettiercache
+.stylelintcache
+*.tsbuildinfo
+.vite/
+.turbo/
+coverage/
+.nyc_output/
+
+# ── Logs ──────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ── Editors & IDEs ────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.iml
+.fleet/
+.zed/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ── OS ────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── AI agent / local tool state (keep shared guides, drop local state) ──
+.claude/settings.local.json
+.claude/worktrees/
+.memsearch/
+.cursor/
+.windsurf/
+.aider*
+.continue/
+
+# ── Scratch ───────────────────────────────────────────────────
+tmp/
+.tmp/
+*.tmp

@@ -1,0 +1,50 @@
+---
+import PostCard from '@/components/content/PostCard.astro';
+import type { Locale } from '@/i18n/config';
+import { alternatesFor, localizePath } from '@/i18n/paths';
+import { t } from '@/i18n/ui';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { listPosts, listSeries } from '@/lib/content';
+import { routes } from '@/lib/routes';
+import { breadcrumbLd } from '@/lib/seo/jsonld';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const [posts, allSeries] = await Promise.all([listPosts(locale), listSeries()]);
+const series = allSeries.filter((s) => posts.some((p) => p.series?.slug === s.slug));
+const title = t(locale, 'writing.title');
+---
+
+<BaseLayout
+  title={title}
+  description={t(locale, 'writing.description')}
+  locale={locale}
+  alternates={alternatesFor(Astro.url.pathname)}
+  jsonLd={[breadcrumbLd(Astro.site!, [{ name: title, path: Astro.url.pathname }])]}
+>
+  <h1 class="text-3xl font-semibold tracking-tight">{title}</h1>
+  <p class="mt-2 text-(--color-muted)">{t(locale, 'writing.description')}</p>
+
+  {series.length > 0 && (
+    <nav aria-label={t(locale, 'writing.series')} class="mt-8 text-sm">
+      <h2 class="font-semibold">{t(locale, 'writing.series')}</h2>
+      <ul class="mt-2 flex flex-wrap gap-3">
+        {series.map((s) => (
+          <li>
+            <a href={localizePath(routes.series(s.slug), locale)} class="underline underline-offset-4">
+              {s.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )}
+
+  <div class="mt-8 divide-y divide-(--color-line)">
+    {posts.map((post) => (
+      <PostCard post={post} locale={locale} />
+    ))}
+  </div>
+</BaseLayout>

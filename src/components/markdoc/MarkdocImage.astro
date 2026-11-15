@@ -1,0 +1,19 @@
+---
+/** Markdoc `![alt](./img.jpg)` → responsive <picture>. Remote URLs fall back to a plain <img>. */
+import type { ImageMetadata } from 'astro';
+
+import ResponsiveImage from '@/components/media/ResponsiveImage.astro';
+
+interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  title?: string;
+}
+const { src, alt, title } = Astro.props;
+---
+
+{typeof src === 'string' ? (
+  <img src={src} alt={alt} title={title} loading="lazy" decoding="async" />
+) : (
+  <ResponsiveImage src={src} alt={alt} title={title} widths={[480, 800, 1200]} sizes="(min-width: 768px) 68ch, 100vw" />
+)}

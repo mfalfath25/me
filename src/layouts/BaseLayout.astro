@@ -1,0 +1,49 @@
+---
+import '@/styles/global.css';
+
+import Footer from '@/components/layout/Footer.astro';
+import Header from '@/components/layout/Header.astro';
+import Seo, { type SeoProps } from '@/components/seo/Seo.astro';
+import { LOCALE_META } from '@/i18n/config';
+import { t } from '@/i18n/ui';
+import { site } from '@/lib/site';
+
+type Props = SeoProps;
+
+const props = Astro.props;
+const { locale } = props;
+const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
+---
+
+<!doctype html>
+<html lang={LOCALE_META[locale].htmlLang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content={site.themeColor} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <Seo {...props} />
+    {import.meta.env.PROD && analyticsToken && (
+      <script
+        defer
+        is:inline
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={JSON.stringify({ token: analyticsToken })}
+      />
+    )}
+  </head>
+  <body class="flex min-h-dvh flex-col">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-(--color-bg) focus:p-2"
+    >
+      {t(locale, 'skip')}
+    </a>
+    <Header locale={locale} />
+    <main id="main" class="mx-auto w-full max-w-5xl flex-1 px-5 py-10">
+      <slot />
+    </main>
+    <Footer locale={locale} />
+  </body>
+</html>

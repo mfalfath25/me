@@ -1,0 +1,9 @@
+---
+import { getTagPaths } from '@/lib/content';
+import TagView from '@/views/TagView.astro';
+
+export const getStaticPaths = () => getTagPaths('id');
+const { content } = Astro.props;
+---
+
+<TagView content={content} locale="id" />

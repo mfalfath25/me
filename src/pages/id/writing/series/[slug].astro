@@ -1,0 +1,9 @@
+---
+import { getSeriesPaths } from '@/lib/content';
+import SeriesView from '@/views/SeriesView.astro';
+
+export const getStaticPaths = () => getSeriesPaths('id');
+const { series, posts } = Astro.props;
+---
+
+<SeriesView series={series} posts={posts} locale="id" />

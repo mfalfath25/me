@@ -1,0 +1,47 @@
+# Stage 1 of the image pipeline + Link previews. See docs/image-pipeline.md.
+# Runs after the Studio (or you) pushes content, then commits the processed result back.
+name: Content pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/assets/**'
+      - 'src/content/archive/**'
+  workflow_dispatch:
+
+concurrency:
+  group: content-pipeline
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    # Never react to our own commit.
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Normalize images (resize, strip GPS/EXIF, read camera details)
+        run: pnpm images:normalize
+      - name: Fetch Link previews
+        run: pnpm links:enrich
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/assets src/content/archive
+          git commit -m "chore(content): normalize images and fetch link previews"
+          git push

@@ -1,0 +1,58 @@
+---
+import ArchiveGrid from '@/components/content/ArchiveGrid.astro';
+import PostCard from '@/components/content/PostCard.astro';
+import ProjectCard from '@/components/content/ProjectCard.astro';
+import type { Locale } from '@/i18n/config';
+import { alternatesFor } from '@/i18n/paths';
+import { t } from '@/i18n/ui';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import type { TaggedContent } from '@/lib/content';
+import { breadcrumbLd } from '@/lib/seo/jsonld';
+
+interface Props {
+  content: TaggedContent;
+  locale: Locale;
+}
+const { content, locale } = Astro.props;
+const { tag, posts, projects, archive } = content;
+const description = tag.description ?? `${t(locale, 'tags.title')}: ${tag.name}`;
+---
+
+<BaseLayout
+  title={`#${tag.name}`}
+  description={description}
+  locale={locale}
+  alternates={alternatesFor(Astro.url.pathname)}
+  jsonLd={[breadcrumbLd(Astro.site!, [{ name: `#${tag.name}`, path: Astro.url.pathname }])]}
+>
+  <p class="text-sm text-(--color-muted)">{t(locale, 'tags.title')}</p>
+  <h1 class="mt-1 text-3xl font-semibold tracking-tight">#{tag.name}</h1>
+  {tag.description && <p class="mt-2 max-w-2xl text-(--color-muted)">{tag.description}</p>}
+
+  {posts.length > 0 && (
+    <section class="mt-10">
+      <h2 class="text-sm font-semibold uppercase tracking-wide">{t(locale, 'nav.writing')}</h2>
+      <div class="divide-y divide-(--color-line)">
+        {posts.map((post) => (
+          <PostCard post={post} locale={locale} />
+        ))}
+      </div>
+    </section>
+  )}
+  {projects.length > 0 && (
+    <section class="mt-10">
+      <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide">{t(locale, 'nav.projects')}</h2>
+      <div class="grid gap-8 md:grid-cols-2">
+        {projects.map((project) => (
+          <ProjectCard project={project} locale={locale} />
+        ))}
+      </div>
+    </section>
+  )}
+  {archive.length > 0 && (
+    <section class="mt-10">
+      <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide">{t(locale, 'nav.archive')}</h2>
+      <ArchiveGrid items={archive} eager={0} />
+    </section>
+  )}
+</BaseLayout>

@@ -1,0 +1,41 @@
+---
+import PostCard from '@/components/content/PostCard.astro';
+import type { Locale } from '@/i18n/config';
+import { alternatesFor, localizePath } from '@/i18n/paths';
+import { t } from '@/i18n/ui';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import type { Post, Series } from '@/lib/content';
+import { routes } from '@/lib/routes';
+import { breadcrumbLd } from '@/lib/seo/jsonld';
+
+interface Props {
+  series: Series;
+  posts: Post[];
+  locale: Locale;
+}
+const { series, posts, locale } = Astro.props;
+---
+
+<BaseLayout
+  title={series.title}
+  description={series.description ?? series.title}
+  locale={locale}
+  alternates={alternatesFor(Astro.url.pathname)}
+  jsonLd={[
+    breadcrumbLd(Astro.site!, [
+      { name: t(locale, 'writing.title'), path: localizePath(routes.writing(), locale) },
+      { name: series.title, path: Astro.url.pathname },
+    ]),
+  ]}
+>
+  <p class="text-sm text-(--color-muted)">{t(locale, 'writing.series')}</p>
+  <h1 class="mt-1 text-3xl font-semibold tracking-tight">{series.title}</h1>
+  {series.description && <p class="mt-2 max-w-2xl text-(--color-muted)">{series.description}</p>}
+  <ol class="mt-8 divide-y divide-(--color-line)">
+    {posts.map((post) => (
+      <li>
+        <PostCard post={post} locale={locale} />
+      </li>
+    ))}
+  </ol>
+</BaseLayout>

@@ -1,0 +1,13 @@
+title: Keystatic
+url: https://keystatic.com/
+note: The git-based editor behind the Studio. Content stays as files in the repo.
+albums: []
+tags:
+  - web
+publishedAt: 2026-11-09
+draft: false
+meta:
+  siteName: Keystatic
+  description: Content management for your codebase.
+  image: ../../../assets/archive/links/keystatic/image.jpg
+  fetchedAt: "2026-11-15T12:46:14.277Z"

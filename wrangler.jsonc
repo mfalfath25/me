@@ -1,0 +1,15 @@
+{
+  // Cloudflare Workers (static assets + the few server routes Keystatic needs).
+  // Free plan: static asset requests are free and unlimited; Worker requests are capped at 100k/day.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "me",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+  },
+  "observability": { "enabled": true },
+}
