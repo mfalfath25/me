@@ -5,4 +5,11 @@ albums: []
 tags: []
 publishedAt: 2026-11-16
 draft: false
-exif: {}
+exif:
+  camera: Apple iPhone 17 Pro
+  lens: iPhone 17 Pro back triple camera 6.765mm f/1.78
+  focalLength: 7mm
+  aperture: ƒ/1.8
+  shutter: 1/1484s
+  iso: "64"
+takenAt: 2026-10-31

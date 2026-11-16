@@ -5,4 +5,11 @@ albums: []
 tags: []
 publishedAt: 2026-11-16
 draft: false
-exif: {}
+exif:
+  camera: Apple iPhone 17
+  lens: iPhone 17 back dual wide camera 5.96mm f/1.6
+  focalLength: 6mm
+  aperture: ƒ/1.6
+  shutter: 1/167s
+  iso: "125"
+takenAt: 2026-11-01

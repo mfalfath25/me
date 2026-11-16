@@ -5,4 +5,11 @@ albums: []
 tags: []
 publishedAt: 2026-11-16
 draft: false
-exif: {}
+exif:
+  camera: Apple iPhone 17 Pro
+  lens: iPhone 17 Pro front camera 2.715mm f/1.9
+  focalLength: 3mm
+  aperture: ƒ/1.9
+  shutter: 1/40s
+  iso: "250"
+takenAt: 2026-11-05
