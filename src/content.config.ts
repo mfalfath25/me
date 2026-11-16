@@ -102,6 +102,14 @@ const links = defineCollection({
     }),
 });
 
+// photo-order.yaml: the Owner's hand-made order of the Photos (a singleton in the Studio).
+const photoOrder = defineCollection({
+  loader: glob({ pattern: 'photo-order.yaml', base: './src/content/archive' }),
+  schema: z.object({
+    photos: z.array(reference('photos')).nullish(),
+  }),
+});
+
 const albums = defineCollection({
   loader: glob({ pattern: '*.yaml', base: './src/content/albums' }),
   schema: z.object({
@@ -129,7 +137,7 @@ const series = defineCollection({
 });
 
 const pages = defineCollection({
-  // about-en.mdoc, about-id.mdoc
+  // readme-en.mdoc, readme-id.mdoc
   loader: glob({ pattern: '*.mdoc', base: './src/content/pages' }),
   schema: z.object({
     title: z.string(),
@@ -137,4 +145,4 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { posts, works, photos, links, albums, tags, series, pages };
+export const collections = { posts, works, photos, photoOrder, links, albums, tags, series, pages };

@@ -15,7 +15,7 @@ Everything flows through `BaseLayout` props into `src/components/seo/Seo.astro`.
 | Page                  | JSON-LD                                                                     |
 | --------------------- | --------------------------------------------------------------------------- |
 | Home                  | `WebSite`, `Person`                                                         |
-| About                 | `ProfilePage` → `Person`                                                    |
+| Readme                | `ProfilePage` → `Person`                                                    |
 | Post                  | `BlogPosting`, `BreadcrumbList`                                             |
 | Work                  | `CreativeWork`, `BreadcrumbList`                                            |
 | Archive, Album        | `ImageGallery` of `ImageObject` (with creator and credit), `BreadcrumbList` |

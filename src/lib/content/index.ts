@@ -6,7 +6,7 @@
  * See docs/adr/0001-content-access-module.md.
  */
 export { getAlbumPaths, listAlbums, listArchiveItems, listLinks, listPhotos } from './archive';
-export { getAboutPage } from './pages';
+export { getReadmePage } from './pages';
 export { getPostPaths, listPosts, listPostsInSeries } from './posts';
 export { getWorkPaths, listWorks } from './works';
 export { resolveRef } from './refs';

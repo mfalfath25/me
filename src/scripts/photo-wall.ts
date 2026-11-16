@@ -186,6 +186,32 @@ function bindHover(card: HTMLElement, hover: Hover) {
 
 // --------------------------------------------------------------------- init
 
+/**
+ * Row-major masonry: the wall is a grid of 4px rows (`.is-masonry`) and each card spans as many
+ * rows as it is tall, so the Owner's order reads left to right, then down. The cards' heights are
+ * known before their images load (aspect-ratio), so one measure per width is enough.
+ */
+const ROW = 4;
+function layoutMasonry(wall: HTMLElement) {
+  const place = () => {
+    wall.classList.add('is-masonry');
+    for (const shot of wall.querySelectorAll<HTMLElement>(':scope > .shot')) {
+      shot.style.gridRowEnd = '';
+      shot.style.gridRowEnd = `span ${Math.ceil(shot.offsetHeight / ROW)}`;
+    }
+  };
+  let frame = 0;
+  let width = 0;
+  new ResizeObserver(([entry]) => {
+    const next = Math.round(entry!.contentRect.width);
+    if (next === width) return;
+    width = next;
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(place);
+  }).observe(wall);
+  place();
+}
+
 export function initPhotoWalls() {
   const walls = document.querySelectorAll<HTMLElement>('[data-photo-wall]:not([data-wall-ready])');
   if (walls.length === 0) return;
@@ -206,6 +232,7 @@ export function initPhotoWalls() {
 
   walls.forEach((wall) => {
     wall.dataset.wallReady = '';
+    layoutMasonry(wall);
     const hover: Hover = wall.dataset.hover === 'foil' ? 'foil' : 'pop';
     wall.querySelectorAll<HTMLElement>('.shot__card').forEach((card) => {
       watchDither(card, resized);

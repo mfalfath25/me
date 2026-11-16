@@ -47,7 +47,7 @@ Overview fields: `title`, `summary`, `role`, `period`, `status` (active/shipped/
 
 `title`, `description`. Posts join a Series via their own `series` + `seriesOrder`.
 
-## About page: `src/content/pages/about-{en,id}.mdoc`
+## Readme page: `src/content/pages/readme-{en,id}.mdoc`
 
 Singletons: `title`, `description`, body.
 

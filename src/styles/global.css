@@ -314,6 +314,12 @@ body::after {
 .signature__stop-top {
   stop-color: var(--color-mark-top);
 }
+.signature__stop-mid-1 {
+  stop-color: var(--color-mark-mid-1);
+}
+.signature__stop-mid-2 {
+  stop-color: var(--color-mark-mid-2);
+}
 .signature__stop-bottom {
   stop-color: var(--color-mark-bottom);
 }
@@ -520,7 +526,7 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-  min-block-size: calc(var(--row) * 2);
+  min-block-size: var(--row);
   padding: var(--inset);
 }
 
@@ -668,6 +674,16 @@ body::after {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+/* With script the wall becomes a grid of 4px rows and photo-wall.ts gives each card the rows it
+   needs, so the photos read left to right, then down, in the Owner's order (CSS columns would run
+   down each column first). Without script the columns above stay. */
+.wall.is-masonry {
+  columns: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(calc(var(--cell) * var(--tile-cols)), 33%), 1fr));
+  grid-auto-rows: 4px;
+  align-items: start;
 }
 
 .shot {
@@ -1067,6 +1083,19 @@ body::after {
   block-size: 100%;
 }
 
+/* A Work without a cover is a text tile: no empty picture, the words start at the top and the
+   summary and the stack have room. */
+.work--plain .work__link {
+  grid-template-rows: auto;
+  align-content: start;
+}
+.work--plain .work__summary {
+  -webkit-line-clamp: 5;
+}
+.work__stack {
+  margin-block-start: var(--space-xs);
+}
+
 .work__cover {
   display: block;
   min-block-size: 0;
@@ -1110,7 +1139,37 @@ body::after {
   flex-direction: column;
   gap: var(--space-xs);
   max-inline-size: 64ch;
-  min-block-size: calc(var(--row) * 2 - var(--inset) * 2);
+  min-block-size: calc(var(--row) - var(--inset) * 2);
+}
+
+/* The way back: an arrow above the title. Hovering slides it a little toward where it points, as
+   if about to leave; pressing pulls it further and tucks it in, so the click is felt before the page
+   changes. Transform only. */
+.back {
+  align-self: flex-start;
+  display: inline-flex;
+  padding: var(--space-3xs) var(--space-2xs) var(--space-3xs) 0;
+  color: var(--color-muted);
+  transition: color var(--dur-micro) ease;
+}
+.back__arrow {
+  display: block;
+  transition: transform var(--dur-short) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .back:hover {
+    color: var(--color-accent-text);
+  }
+  .back:hover .back__arrow {
+    transform: translateX(calc(var(--space-2xs) * -1));
+  }
+}
+.back:focus-visible .back__arrow {
+  transform: translateX(calc(var(--space-2xs) * -1));
+}
+.back:active .back__arrow {
+  transform: translateX(calc(var(--space-xs) * -1)) scale(0.9);
+  transition-duration: var(--dur-press);
 }
 
 .article__cover {
@@ -1174,22 +1233,11 @@ body::after {
   font-weight: var(--weight-strong);
 }
 .prose ul {
-  list-style: none;
+  list-style: disc;
   padding-inline-start: 1.25em;
 }
-/* Bullets are the mark's tick, in the accent. */
-.prose ul > li {
-  position: relative;
-}
-.prose ul > li::before {
-  content: '';
-  position: absolute;
-  inset-block-start: calc(var(--leading-prose) * 0.5em - var(--tick-h) / 2);
-  inset-inline-start: -1.1em;
-  inline-size: var(--tick-w);
-  block-size: var(--tick-h);
-  background: var(--color-accent);
-  clip-path: var(--tick);
+.prose ul > li::marker {
+  color: var(--color-accent);
 }
 .prose ol {
   list-style: decimal;
@@ -1220,27 +1268,11 @@ body::after {
 .prose pre.astro-code code {
   font-size: 0.95em;
 }
-/* A section break: three of the mark's ticks, centred, in place of a rule. */
+/* A section break: a plain hairline. */
 .prose hr {
-  inline-size: calc(var(--tick-w) * 5);
-  block-size: var(--tick-h);
-  margin: var(--space-xl) auto;
+  margin: var(--space-xl) 0;
   border: 0;
-  background: var(--color-muted);
-  clip-path: polygon(
-    0 100%,
-    24% 0,
-    36% 0,
-    12% 100%,
-    32% 100%,
-    56% 0,
-    68% 0,
-    44% 100%,
-    64% 100%,
-    88% 0,
-    100% 0,
-    76% 100%
-  );
+  border-block-start: 1px solid var(--color-rule);
 }
 .prose table {
   inline-size: 100%;

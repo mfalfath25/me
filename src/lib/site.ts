@@ -18,7 +18,7 @@ export const site = {
   name: 'Alfath',
   author: {
     name: 'Alfath',
-    url: '/about',
+    url: '/readme',
     // Used in Person JSON-LD `sameAs`; helps search engines connect profiles.
     sameAs: ['https://github.com/mfalfath25'],
   },

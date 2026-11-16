@@ -14,10 +14,10 @@ interface Props {
 const { work, locale } = Astro.props;
 ---
 
-<article class="work">
+<article class={work.cover ? 'work' : 'work work--plain'}>
   <a href={localizePath(routes.work(work.slug), locale)} class="work__link">
-    <span class="work__cover">
-      {work.cover && (
+    {work.cover && (
+      <span class="work__cover">
         <ResponsiveImage
           src={work.cover}
           alt={work.coverAlt}
@@ -25,8 +25,8 @@ const { work, locale } = Astro.props;
           sizes="(min-width: 768px) 384px, 288px"
           pictureClass="tile__picture"
         />
-      )}
-    </span>
+      </span>
+    )}
     <div class="work__text">
       <p class="meta">
         {t(locale, `works.status.${work.status}`)}
@@ -38,6 +38,7 @@ const { work, locale } = Astro.props;
       <p class="work__summary" lang={work.locale}>
         {work.summary}
       </p>
+      {!work.cover && work.stack.length > 0 && <p class="work__stack meta">{work.stack.join(', ')}</p>}
     </div>
   </a>
 </article>

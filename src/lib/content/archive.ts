@@ -1,4 +1,4 @@
-import { getCollection } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 
 import { deriveAlt } from './alt';
 import { byNewest, isHidden, isVisible, resolveTags } from './shared';
@@ -41,7 +41,17 @@ export async function listPhotos(): Promise<Photo[]> {
       } satisfies Photo;
     }),
   );
-  return photos.sort(byNewest);
+  // The Owner's order first (Studio → Archive → Photo order); photos not listed follow, newest first.
+  const listed = (await getEntry('photoOrder', 'photo-order'))?.data.photos?.map((ref) => ref.id) ?? [];
+  const rank = new Map(listed.map((id, i) => [id, i]));
+  return photos.sort((a, b) => {
+    const ra = rank.get(a.slug);
+    const rb = rank.get(b.slug);
+    if (ra != null && rb != null) return ra - rb;
+    if (ra != null) return -1;
+    if (rb != null) return 1;
+    return byNewest(a, b);
+  });
 }
 
 export async function listLinks(): Promise<Link[]> {
@@ -66,10 +76,10 @@ export async function listLinks(): Promise<Link[]> {
   return links.sort(byNewest);
 }
 
-/** Photos and Links interleaved, newest first. */
+/** Photos in the Owner's order, then Links, newest first. */
 export async function listArchiveItems(): Promise<ArchiveItem[]> {
   const [photos, links] = await Promise.all([listPhotos(), listLinks()]);
-  return [...photos, ...links].sort(byNewest);
+  return [...photos, ...links];
 }
 
 export async function listAlbums(): Promise<Album[]> {

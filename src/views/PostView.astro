@@ -49,6 +49,17 @@ const coverForLd = post.cover ? (await getImage({ src: post.cover, width: 1200, 
   <article class="article" lang={post.locale}>
     {post.isFallback && <TranslationNotice locale={locale} />}
     <header class="article__head">
+      <a href={localizePath(routes.writing(), locale)} class="back" aria-label={t(locale, 'post.back')}>
+        <svg class="back__arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M20 12H5M11 6l-6 6 6 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="square"
+          />
+        </svg>
+      </a>
       <h1 class="title">{post.title}</h1>
       <p class="meta">
         <time datetime={post.publishedAt.toISOString()}>{formatDate(post.publishedAt, locale)}</time>

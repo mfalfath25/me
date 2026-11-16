@@ -17,7 +17,7 @@ _Avoid_: Admin, CMS, control room, dashboard, backend
 ### Languages
 
 **Translation**:
-The Indonesian version of a Post, Work or About page. English is always written first; Translations are optional per item.
+The Indonesian version of a Post, Work or Readme page. English is always written first; Translations are optional per item.
 _Avoid_: Localization, version
 
 **Fallback**:

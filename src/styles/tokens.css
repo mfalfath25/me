@@ -21,11 +21,6 @@
   --leading-prose: 1.7;
   --leading-tight: 1.15;
 
-  /* The tick: the mark's diagonal cut small (its bars lean about 0.6 across per 1 down). Prose
-     bullets and section breaks. */
-  --tick-w: 6px;
-  --tick-h: 9px;
-  --tick: polygon(60% 0, 100% 0, 40% 100%, 0 100%);
   --weight-regular: 400;
   --weight-strong: 500;
   --tracking-display: -0.01em;
@@ -163,6 +158,8 @@
   --shiki-token-link: var(--color-accent);
   /* The mark: deep indigo at the top to violet at the bottom, inside a grey-to-lavender edge. */
   --color-mark-top: oklch(15% 0.045 288);
+  --color-mark-mid-1: oklch(31% 0.128 286);
+  --color-mark-mid-2: oklch(34% 0.147 285);
   --color-mark-bottom: oklch(50% 0.23 283);
   --color-mark-edge-top: oklch(46% 0.02 290);
   --color-mark-edge-bottom: oklch(70% 0.13 286);
@@ -246,12 +243,14 @@
   --shiki-token-comment: var(--color-muted);
   --shiki-token-punctuation: oklch(66% 0.025 165);
   --shiki-token-link: var(--color-accent);
-  /* The mark: the light mode's colours with their lightness inverted (L to 100 - L), so the
-   violet mark reads on dark paper: pale lavender at the top to violet at the bottom. */
-  --color-mark-top: oklch(85% 0.045 288);
-  --color-mark-bottom: oklch(50% 0.23 283);
-  --color-mark-edge-top: oklch(54% 0.02 290);
-  --color-mark-edge-bottom: oklch(30% 0.13 286);
+  /* The mark in dark mode: white at the top of the upper bar, then pale and fresh lime down to a
+   solid lime at the foot, inside a light grey edge that turns olive green. */
+  --color-mark-top: oklch(99.4% 0.01 115);
+  --color-mark-mid-1: oklch(94.5% 0.07 120);
+  --color-mark-mid-2: oklch(90% 0.14 122);
+  --color-mark-bottom: oklch(79% 0.21 123);
+  --color-mark-edge-top: oklch(85% 0.004 110);
+  --color-mark-edge-bottom: oklch(60% 0.14 125);
   --color-scrim: oklch(9% 0.01 165 / 0.9);
   --color-selection: oklch(78% 0.15 162 / 0.35);
   --noise-opacity-low: 0.035;
@@ -320,12 +319,14 @@
     --shiki-token-comment: var(--color-muted);
     --shiki-token-punctuation: oklch(66% 0.025 165);
     --shiki-token-link: var(--color-accent);
-    /* The mark: the light mode's colours with their lightness inverted (L to 100 - L), so the
-   violet mark reads on dark paper: pale lavender at the top to violet at the bottom. */
-    --color-mark-top: oklch(85% 0.045 288);
-    --color-mark-bottom: oklch(50% 0.23 283);
-    --color-mark-edge-top: oklch(54% 0.02 290);
-    --color-mark-edge-bottom: oklch(30% 0.13 286);
+    /* The mark in dark mode: white at the top of the upper bar, then pale and fresh lime down to a
+   solid lime at the foot, inside a light grey edge that turns olive green. */
+    --color-mark-top: oklch(99.4% 0.01 115);
+    --color-mark-mid-1: oklch(94.5% 0.07 120);
+    --color-mark-mid-2: oklch(90% 0.14 122);
+    --color-mark-bottom: oklch(79% 0.21 123);
+    --color-mark-edge-top: oklch(85% 0.004 110);
+    --color-mark-edge-bottom: oklch(60% 0.14 125);
     --color-scrim: oklch(9% 0.01 165 / 0.9);
     --color-selection: oklch(78% 0.15 162 / 0.35);
     --noise-opacity-low: 0.035;

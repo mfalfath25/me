@@ -134,9 +134,9 @@ export default config({
     brand: { name: 'Studio' },
     navigation: {
       Writing: ['postsEn', 'postsId', 'series'],
-      Archive: ['photos', 'links', 'albums'],
+      Archive: ['photos', 'photoOrder', 'links', 'albums'],
       Works: ['worksEn', 'worksId'],
-      Site: ['tags', 'aboutEn', 'aboutId'],
+      Site: ['tags', 'readmeEn', 'readmeId'],
     },
   },
   collections: {
@@ -268,9 +268,22 @@ export default config({
     }),
   },
   singletons: {
-    aboutEn: singleton({
-      label: 'About · English',
-      path: 'src/content/pages/about-en',
+    photoOrder: singleton({
+      label: 'Photo order',
+      path: 'src/content/archive/photo-order',
+      format: 'yaml',
+      schema: {
+        photos: fields.array(fields.relationship({ label: 'Photo', collection: 'photos' }), {
+          label: 'Photos, first to last',
+          description:
+            'Drag to reorder; this is the order of the Archive and the home page. Photos left out follow the listed ones, newest first.',
+          itemLabel: (p) => p.value ?? 'Choose a photo',
+        }),
+      },
+    }),
+    readmeEn: singleton({
+      label: 'Readme · English',
+      path: 'src/content/pages/readme-en',
       format: { contentField: 'body' },
       entryLayout: 'content',
       schema: {
@@ -279,9 +292,9 @@ export default config({
         body: body('Body', 'pages', 2),
       },
     }),
-    aboutId: singleton({
-      label: 'About · Indonesian',
-      path: 'src/content/pages/about-id',
+    readmeId: singleton({
+      label: 'Readme · Indonesian',
+      path: 'src/content/pages/readme-id',
       format: { contentField: 'body' },
       entryLayout: 'content',
       schema: {

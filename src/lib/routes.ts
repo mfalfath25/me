@@ -14,6 +14,6 @@ export const routes = {
   works: () => '/works',
   work: (slug: string) => `/works/${slug}`,
   tag: (slug: string) => `/tags/${slug}`,
-  about: () => '/about',
+  readme: () => '/readme',
   rss: () => '/rss.xml',
 } as const;

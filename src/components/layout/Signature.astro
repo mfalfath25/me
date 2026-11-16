@@ -3,7 +3,7 @@
  * The Owner's mark, the home link at the top of the rail: one angular silhouette (a top bar and a
  * bottom bar joined by a diagonal), traced from the Owner's logo and made point-symmetric about
  * its centre. Filled with a vertical gradient (deep at the top, bright at the bottom) inside an
- * edge with its own gradient; the four stops are --color-mark-* tokens, so it follows the theme.
+ * edge with its own gradient; its stops are --color-mark-* tokens, so it follows the theme.
  * On the first page of a visit the edge draws itself and the fill comes up behind it. Styles live
  * in global.css (.signature).
  */
@@ -21,6 +21,8 @@ const d =
   <defs>
     <linearGradient id="mark-fill" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" class="signature__stop-top"></stop>
+      <stop offset="0.45" class="signature__stop-mid-1"></stop>
+      <stop offset="0.55" class="signature__stop-mid-2"></stop>
       <stop offset="1" class="signature__stop-bottom"></stop>
     </linearGradient>
     <linearGradient id="mark-edge" x1="0" y1="0" x2="0" y2="1">
