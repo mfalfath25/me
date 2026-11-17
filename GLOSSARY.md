@@ -14,6 +14,21 @@ _Avoid_: Admin, author, user
 The Owner's private editor for creating and changing all content, reached at a hidden address behind a login.
 _Avoid_: Admin, CMS, control room, dashboard, backend
 
+### Identity
+
+**Mark**:
+The Owner's logo, the angular shape at the top of the rail that links home.
+
+**Autograph**:
+The Owner's handwritten signature, drawn as a pen stroke at the foot of the rail. A decoration, not a link.
+_Avoid_: Signature (in the code that name is the Mark)
+
+**Weather**:
+What the sky is doing over the bamboo behind the page: rain, wind, or autumn with falling leaves. Decoration, never content.
+
+**Wildlife**:
+The birds and rabbits that now and then pass through the bamboo behind the page. Decoration, never content.
+
 ### Languages
 
 **Translation**:
@@ -37,6 +52,10 @@ _Avoid_: Collection, episodes, thread
 **Photo**:
 A single photograph published in the photography section, with its own descriptive details.
 _Avoid_: Picture, image, shot
+
+**Dither Preset**:
+A named look for Photos at rest, such as braille, letters, dots or tiles, in a given set of colours. The Owner picks one for the browser they view the site in.
+_Avoid_: Filter, theme, style
 
 **Archive**:
 The section of the site that holds Photos and saved links, loosely grouped and browsable.

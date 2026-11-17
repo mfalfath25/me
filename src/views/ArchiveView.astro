@@ -41,7 +41,7 @@ const galleryImages = await Promise.all(
   ]}
 >
   <header class="page-head">
-    <h1 class="title">{title}</h1>
+    <h1 class="title title--menu">{title}</h1>
     <p class="lede">{t(locale, 'archive.description')}</p>
     {albums.length > 0 && (
       <nav aria-label={t(locale, 'archive.albums')}>

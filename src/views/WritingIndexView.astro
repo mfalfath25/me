@@ -25,7 +25,7 @@ const title = t(locale, 'writing.title');
   jsonLd={[breadcrumbLd(Astro.site!, [{ name: title, path: Astro.url.pathname }])]}
 >
   <header class="page-head">
-    <h1 class="title">{title}</h1>
+    <h1 class="title title--menu">{title}</h1>
     <p class="lede">{t(locale, 'writing.description')}</p>
     {series.length > 0 && (
       <nav aria-label={t(locale, 'writing.series')}>

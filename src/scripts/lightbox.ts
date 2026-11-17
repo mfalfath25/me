@@ -11,7 +11,7 @@
  * one fades in through a light blur. Pressing again mid-fade cuts straight to the next photo. A click anywhere but the photo and its controls, Escape, or Close
  * closes it, morphing back into the current photo's card. Reduced motion: no morph, no fade.
  */
-import { cardPose, restCard } from './photo-wall';
+import { cardPose, restCard } from './card-hover';
 
 const OPEN_MS = 440;
 const CLOSE_MS = 320;

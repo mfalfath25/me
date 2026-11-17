@@ -24,9 +24,25 @@
  * Inks come from --color-bamboo-cool-1..3 and --color-bamboo-warm-1..3 (faint to strong),
  * strength from --bamboo-strength, re-read on theme change. Capped at 30fps, paused while the
  * tab is hidden, drawn once (still, no wind) under reduced motion. No WebGL: the paper shows.
+ *
+ * Now and then birds cross the sky or a rabbit hops along the bottom (src/scripts/wildlife.ts).
+ *
+ * Weather (src/scripts/weather.ts) plays over the grove in layers of depth: the further a drop or
+ * a leaf is, the smaller, slower and fainter it is drawn, and the higher up it meets the ground.
+ *   Ground: two faded bands at the foot, far and near, that the rain lands on.
+ *   Rain: streaks of varied length, slanting with the wind, each breaking into a small splash
+ *     where it lands.
+ *   Wind: the breeze grows stronger and gustier and pushes one way, so the grove bends and bounces.
+ *   Autumn: the leaves warm toward yellow, and now and then one leaf lets go of its spray (never
+ *     more than one per spray), tumbles down to the very bottom of the page (depth aside) and lies
+ *     there a while before it fades.
  */
+import { site } from '@/lib/site';
+
 import { makeColorReader } from './color';
 import { FROST_IN_FIELD, FROST_SELECTOR } from './frost';
+import { createWeather, parseWeatherParam } from './weather';
+import { createWildlife, parseWildlifeParam } from './wildlife';
 
 const DOT = 2;
 const FRAME_MS = 1000 / 30;
@@ -34,7 +50,13 @@ const FRAME_MS = 1000 / 30;
 const MAX_PATCHES = 48;
 /** How much of the ink a patch takes away (the CSS wash, --legible-wash, does 0.55; dither dots
  * read stronger than a smooth wash, so the shader thins more). */
-const FROST_FADE = 0.8;
+const FROST_FADE = 0.7;
+/** Most raindrops in the air at once, splash droplets and fallen leaves. */
+const MAX_DROPS = 420;
+const MAX_SPARKS = 300;
+const MAX_FALLERS = 48;
+/** How tall the ground is at the foot of the screen, css px; the furthest rain lands at its top. */
+const GROUND = 60;
 
 // ---------------------------------------------------------------- shaders
 
@@ -191,6 +213,8 @@ interface Spray {
   /** Which joint of the branch it hangs from. */
   at: number;
   leaves: Leaf[];
+  /** Has it let a leaf fall this autumn? Each spray drops one at most. */
+  dropped: boolean;
 }
 
 interface Chain {
@@ -218,6 +242,43 @@ interface Culm extends Chain {
   rootY: number;
   lean: number;
   branches: Branch[];
+}
+
+/** A raindrop. `z` is its depth: 0 near, 1 far. */
+interface Drop {
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  len: number;
+  ground: number;
+}
+
+/** A droplet thrown up by a splash, or (with no speed) the flat crown it leaves. */
+interface Spark {
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  life: number;
+  crown: boolean;
+}
+
+/** A leaf that has let go: falling, then lying on the ground (`lying` counts seconds there). */
+interface Faller {
+  x: number;
+  y: number;
+  a: number;
+  spin: number;
+  len: number;
+  wid: number;
+  ink: number;
+  z: number;
+  phase: number;
+  ground: number;
+  lying: number;
 }
 
 interface Gust {
@@ -285,6 +346,10 @@ export function initBambooField(canvas: HTMLCanvasElement) {
   const readColor = makeColorReader();
   // A new grove on every load.
   const seed = (Math.random() * 2 ** 32) >>> 0;
+  const weatherParam = new URLSearchParams(location.search).get('weather');
+  const weather = createWeather(Math.random, parseWeatherParam(weatherParam));
+  // Birds and rabbits now and then (src/scripts/wildlife.ts), inked with the grove.
+  const wildlife = createWildlife(Math.random, { ...parseWildlifeParam(weatherParam), enabled: site.wildlife });
 
   let W = 1;
   let H = 1;
@@ -293,6 +358,9 @@ export function initBambooField(canvas: HTMLCanvasElement) {
   let scale = 1;
   let culms: Culm[] = [];
   let gusts: Gust[] = [];
+  let drops: Drop[] = [];
+  let sparks: Spark[] = [];
+  let fallers: Faller[] = [];
 
   // ------------------------------------------------------------ theme
 
@@ -333,7 +401,9 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     /** A spray of leaves fanning out around `aim` (radians, relative to the branch tip). */
     const spray = (aim: number, spread: number): Leaf[] => {
       const leaves = leafCount();
-      const warmth = rand() < 0.3 ? 0.6 + rand() * 0.4 : rand() * 0.35;
+      let warmth = rand() < 0.3 ? 0.6 + rand() * 0.4 : rand() * 0.35;
+      // Autumn turns the grove toward yellow.
+      if (weather.autumn) warmth = 0.55 + warmth * 0.45;
       return Array.from({ length: leaves }, (_, l) => ({
         rest: aim + (l / Math.max(1, leaves - 1) - 0.5) * spread + (rand() - 0.5) * 0.25,
         angle: 0,
@@ -404,7 +474,7 @@ export function initBambooField(canvas: HTMLCanvasElement) {
           const b = branch(node, segs, (60 + rand() * 110) * scale, side * (0.55 + rand() * 0.6), side * 0.12, depth);
           for (let at = 1; at <= segs; at++) {
             if (at < segs && rand() < 0.4) continue;
-            b.sprays.push({ at, leaves: spray(side * 0.35, 1.3 + rand() * 0.6) });
+            b.sprays.push({ at, leaves: spray(side * 0.35, 1.3 + rand() * 0.6), dropped: false });
           }
           c.branches.push(b);
         }
@@ -420,11 +490,11 @@ export function initBambooField(canvas: HTMLCanvasElement) {
           const aim = (t / Math.max(1, twigs - 1) - 0.5) * (1.2 + rand() * 0.5) + (rand() - 0.5) * 0.2;
           const segs = 1 + Math.floor(rand() * 2);
           const b = branch(n, segs, (28 + rand() * 50) * scale, aim, aim * 0.3, depth);
-          b.sprays.push({ at: segs, leaves: spray(aim * 0.6, 1.4 + rand() * 0.5) });
+          b.sprays.push({ at: segs, leaves: spray(aim * 0.6, 1.4 + rand() * 0.5), dropped: false });
           c.branches.push(b);
         }
         const tip = branch(n, 1, 6 * scale, 0, 0, depth);
-        tip.sprays.push({ at: 1, leaves: spray(0, 1.1 + rand() * 0.4) });
+        tip.sprays.push({ at: 1, leaves: spray(0, 1.1 + rand() * 0.4), dropped: false });
         c.branches.push(tip);
 
         culms.push(c);
@@ -454,14 +524,29 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     grow();
     pose();
+    // A new grove: what was in the air or on the ground belonged to the old one.
+    drops = [];
+    sparks = [];
+    fallers = [];
+    wildlife.clear();
   }
 
   // ------------------------------------------------------------ physics
 
+  /** The breeze across the whole grove: a slow sway, and in a wind, stronger, gustier and pushing
+   * one way. */
+  function breezeAt(t: number) {
+    const windy = weather.wind;
+    return (
+      (noise1(t * 0.2) - 0.5) * 0.45 * (1 + windy * 1.4) +
+      (noise1(t * 0.8 + 40) - 0.5) * 0.1 * (1 + windy * 4) +
+      windy * weather.windDir * (0.15 + 0.3 * noise1(t * 0.45 + 90))
+    );
+  }
+
   /** Wind at a point: the breeze, plus any faint pointer gust nearby. */
   function windAt(x: number, y: number, t: number): [number, number] {
-    const breeze = (noise1(t * 0.2) - 0.5) * 0.45 + (noise1(t * 0.8 + 40) - 0.5) * 0.1;
-    let wx = breeze * (0.4 + 0.6 * (1 - y / H));
+    let wx = breezeAt(t) * (0.4 + 0.6 * (1 - y / H));
     let wy = 0;
     const R = 120 * scale;
     for (const g of gusts) {
@@ -540,6 +625,138 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     pose();
   }
 
+  // ------------------------------------------------------------ weather
+
+  /** How far toward the top a thing at depth z meets the ground. */
+  const groundAt = (z: number) => H - z * GROUND * 0.9;
+  /** Size and speed at depth z. */
+  const near = (z: number) => 1 - z * 0.6;
+
+  let rainDue = 0;
+  let leafDue = 2 + Math.random() * 3;
+
+  function weatherStep(dt: number, t: number) {
+    weather.update(dt);
+    const rand = Math.random;
+    const drift = breezeAt(t);
+    wildlife.update(dt, W, H, scale, drift);
+
+    // Rain: new drops across the top, more as the shower builds, in three layers of depth.
+    rainDue += weather.rain * 240 * (W / 1440) * dt;
+    while (rainDue >= 1 && drops.length < MAX_DROPS) {
+      rainDue--;
+      const z = Math.min(1, [0.08, 0.42, 0.78][Math.floor(rand() * 3)] + rand() * 0.18);
+      const k = near(z);
+      const vy = (720 + rand() * 260) * k;
+      drops.push({
+        x: -W * 0.15 + rand() * W * 1.3,
+        y: -rand() * 60,
+        z,
+        vx: drift * 700 * k,
+        vy,
+        len: (8 + rand() ** 1.6 * 30) * k * Math.max(0.8, scale),
+        ground: groundAt(z) - rand() * 6 * k,
+      });
+    }
+    if (rainDue > 1) rainDue = 0;
+
+    for (let i = drops.length - 1; i >= 0; i--) {
+      const d = drops[i];
+      d.vx += (drift * 700 * near(d.z) - d.vx) * Math.min(1, dt * 2);
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      if (d.y < d.ground) continue;
+      drops.splice(i, 1);
+      if (sparks.length > MAX_SPARKS) continue;
+      // A splash: a flat crown, and two to four droplets thrown up and out.
+      const k = near(d.z);
+      sparks.push({ x: d.x, y: d.ground, z: d.z, vx: 0, vy: 0, life: 1, crown: true });
+      for (let n = 2 + Math.floor(rand() * 3); n > 0; n--) {
+        sparks.push({
+          x: d.x,
+          y: d.ground,
+          z: d.z,
+          vx: ((rand() - 0.5) * 130 + d.vx * 0.12) * k,
+          vy: -(60 + rand() * 120) * k,
+          life: 1,
+          crown: false,
+        });
+      }
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const p = sparks[i];
+      p.life -= dt / (p.crown ? 0.28 : 0.42);
+      if (p.life <= 0) {
+        sparks.splice(i, 1);
+        continue;
+      }
+      if (p.crown) continue;
+      p.vy += 900 * near(p.z) * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+
+    // Autumn: now and then a leaf lets go, sooner in a wind.
+    if (weather.autumn && (leafDue -= dt * (1 + weather.wind * 2.5)) <= 0) {
+      leafDue = 1.5 + rand() * 4.5;
+      letGo(rand);
+    }
+    for (let i = fallers.length - 1; i >= 0; i--) {
+      const f = fallers[i];
+      if (f.lying >= 0) {
+        f.lying += dt;
+        // Lies a while, then fades into the ground.
+        if (f.lying > 28) fallers.splice(i, 1);
+        continue;
+      }
+      const k = 1 - f.z * 0.35;
+      const rock = Math.sin(t * 1.9 + f.phase);
+      f.x += (rock * 34 + drift * 220) * k * dt;
+      f.y += (34 + 30 * rock * rock) * k * scale * dt;
+      f.spin += (rand() - 0.5) * dt * 2;
+      f.a += (f.spin + rock * 1.1) * dt;
+      if (f.y >= f.ground) {
+        f.y = f.ground;
+        // Settles flat, a little askew.
+        f.a = (Math.cos(f.a) < 0 ? Math.PI : 0) + (rand() - 0.5) * 0.3;
+        f.lying = 0;
+      }
+    }
+  }
+
+  /** One leaf from a spray that has not dropped one yet, somewhere on screen. */
+  function letGo(rand: () => number) {
+    const ready: [Culm, Branch, Spray][] = [];
+    for (const c of culms)
+      for (const b of c.branches)
+        for (const sp of b.sprays) {
+          const y = b.y[sp.at];
+          if (!sp.dropped && sp.leaves.length > 1 && y > 0 && y < H) ready.push([c, b, sp]);
+        }
+    if (!ready.length) return;
+    const [c, b, sp] = ready[Math.floor(rand() * ready.length)];
+    const [l] = sp.leaves.splice(Math.floor(rand() * sp.leaves.length), 1);
+    sp.dropped = true;
+    const a = b.a[sp.at] + l.rest + l.angle;
+    if (fallers.length >= MAX_FALLERS) fallers.shift();
+    fallers.push({
+      // Held by its middle, so it turns about it as it falls.
+      x: b.x[sp.at] + Math.cos(a) * l.len * 0.5,
+      y: b.y[sp.at] + Math.sin(a) * l.len * 0.5,
+      a,
+      spin: (rand() - 0.5) * 2,
+      len: l.len,
+      wid: l.wid,
+      ink: leafInk(c, l),
+      z: 0,
+      phase: rand() * 10,
+      // Leaves ignore depth: they all come to rest at the very bottom of the page.
+      ground: H - 1 - rand() * 2,
+      lying: -1,
+    });
+  }
+
   // ------------------------------------------------------------ geometry
 
   let verts = new Float32Array(1 << 16);
@@ -566,7 +783,7 @@ export function initBambooField(canvas: HTMLCanvasElement) {
   }
 
   /** A stroke from (x0, y0) to (x1, y1), tapering from width w0 to w1. */
-  function stroke(x0: number, y0: number, x1: number, y1: number, w0: number, w1: number, ink: number) {
+  function stroke(x0: number, y0: number, x1: number, y1: number, w0: number, w1: number, ink: number, warm = 0.25) {
     const dx = x1 - x0;
     const dy = y1 - y0;
     const d = Math.hypot(dx, dy) || 1;
@@ -580,8 +797,8 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     const cy = y1 + ny * w1 * 0.5;
     const ex = x1 - nx * w1 * 0.5;
     const ey = y1 - ny * w1 * 0.5;
-    tri(ax, ay, bx, by, cx, cy, 0.25, ink);
-    tri(bx, by, ex, ey, cx, cy, 0.25, ink);
+    tri(ax, ay, bx, by, cx, cy, warm, ink);
+    tri(bx, by, ex, ey, cx, cy, warm, ink);
   }
 
   /** A lanceolate leaf: widest a third of the way out, its tip sagging a little. */
@@ -609,10 +826,41 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     }
   }
 
+  const culmInk = (c: Culm) => 0.62 - c.depth * 0.3;
+  const leafInk = (c: Culm, l: Leaf) => (culmInk(c) + 0.12) * (0.75 + 0.35 * ((l.seed * 7) % 1));
+
+  /** The ground the grove stands on: two faded bands of ink, a faint far one reaching up to where the
+   * furthest rain lands and a nearer, denser one at the foot, so the ground recedes as the rain
+   * and the fallen leaves do. Its top edge rolls a little, as earth does. */
+  function ground() {
+    const bands: [number, number, number][] = [
+      // height (css px), ink at the foot, warmth
+      [GROUND, 0.035, 0.6],
+      [GROUND * 0.4, 0.04, 0.45],
+    ];
+    const cols = 32;
+    for (const [rise, ink, warm] of bands) {
+      for (let i = 0; i < cols; i++) {
+        const x0 = (i / cols) * W;
+        const x1 = ((i + 1) / cols) * W;
+        const top = (x: number) => H - rise * (0.8 + 0.4 * noise1(x / 260 + rise));
+        const t0 = top(x0);
+        const t1 = top(x1);
+        vert(x0, t0, warm, 0);
+        vert(x1, t1, warm, 0);
+        vert(x0, H, warm, ink);
+        vert(x1, t1, warm, 0);
+        vert(x1, H, warm, ink);
+        vert(x0, H, warm, ink);
+      }
+    }
+  }
+
   function build() {
     count = 0;
+    ground();
     for (const c of culms) {
-      const ink = 0.62 - c.depth * 0.3;
+      const ink = culmInk(c);
       const n = c.segs.length;
       for (let i = 0; i < n; i++) {
         const w0 = c.width0 + ((c.width1 - c.width0) * i) / n;
@@ -644,18 +892,41 @@ export function initBambooField(canvas: HTMLCanvasElement) {
           const y = b.y[spray.at];
           const base = b.a[spray.at];
           for (const l of spray.leaves) {
-            leaf(
-              x,
-              y,
-              base + l.rest + l.angle,
-              l.len,
-              l.wid,
-              l.warm,
-              (ink + 0.12) * (0.75 + 0.35 * ((l.seed * 7) % 1)),
-            );
+            leaf(x, y, base + l.rest + l.angle, l.len, l.wid, l.warm, leafInk(c, l));
           }
         }
       }
+    }
+    buildWeather();
+  }
+
+  /** Rain, splashes and fallen leaves, over the grove. Ink fades and strokes thin with depth. */
+  const pen = { stroke, tri };
+
+  function buildWeather() {
+    wildlife.draw(pen, H - 2);
+    const showing = Math.min(1, weather.rain * 1.5 + 0.35);
+    for (const d of drops) {
+      const k = near(d.z);
+      const v = Math.hypot(d.vx, d.vy) || 1;
+      const ink = (0.78 - d.z * 0.5) * showing;
+      stroke(d.x - (d.vx / v) * d.len, d.y - (d.vy / v) * d.len, d.x, d.y, 0.9 * k, 2.4 * k, ink, 0);
+    }
+    for (const p of sparks) {
+      const k = near(p.z);
+      const ink = (0.85 - p.z * 0.5) * Math.min(1, p.life * 1.6);
+      if (p.crown) {
+        const r = (2 + (1 - p.life) * 9) * k;
+        stroke(p.x - r, p.y, p.x + r, p.y, 1.8 * k, 1.8 * k, ink * 0.8, 0);
+      } else {
+        stroke(p.x, p.y, p.x - p.vx * 0.03, p.y - p.vy * 0.03, 2.2 * k, 1.2 * k, ink, 0);
+      }
+    }
+    for (const f of fallers) {
+      const fade = f.lying > 24 ? 1 - (f.lying - 24) / 4 : 1;
+      const bx = f.x - Math.cos(f.a) * f.len * 0.5;
+      const by = f.y - Math.sin(f.a) * f.len * 0.5;
+      leaf(bx, by, f.a, f.len, f.wid, 1, f.ink * fade);
     }
   }
 
@@ -681,7 +952,13 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     const px = (v: string) => -(Number.parseFloat(v) || 0);
     patches = [...document.querySelectorAll(FROST_SELECTOR)].map((el) => {
       const before = getComputedStyle(el, '::before');
-      return { el, top: px(before.top), right: px(before.right), bottom: px(before.bottom), left: px(before.left) };
+      return {
+        el,
+        top: px(before.top),
+        right: px(before.right),
+        bottom: px(before.bottom),
+        left: px(before.left),
+      };
     });
     feather = (Number.parseFloat(getComputedStyle(root).getPropertyValue('--space-sm')) || 12) / DOT;
     frostDirty = true;
@@ -778,6 +1055,7 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     // Two substeps keep the stiff springs steady.
     step(dt / 2, clock);
     step(dt / 2, clock);
+    weatherStep(dt, clock);
     render();
   }
 

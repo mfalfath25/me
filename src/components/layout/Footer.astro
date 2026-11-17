@@ -5,8 +5,11 @@
  */
 import type { Locale } from '@/i18n/config';
 import { localizePath } from '@/i18n/paths';
+import { t } from '@/i18n/ui';
 import { routes } from '@/lib/routes';
 import { site } from '@/lib/site';
+
+import SocialIcon from './SocialIcon.astro';
 
 interface Props {
   locale: Locale;
@@ -18,14 +21,23 @@ const { locale } = Astro.props;
   <ul>
     {site.socials.map((s) => (
       <li>
-        <a href={s.href} rel="me noopener" target="_blank">
-          {s.label}
+        <a href={s.href} class="social" rel="me noopener" target="_blank" aria-label={s.label}>
+          <SocialIcon name={s.id} />
         </a>
       </li>
     ))}
     <li>
-      <a href={localizePath(routes.rss(), locale)}>RSS</a>
+      <a href={`mailto:${site.email}`} class="social" aria-label={t(locale, 'email.label')}>
+        <SocialIcon name="email" />
+      </a>
     </li>
+    {site.rssIcon && (
+      <li>
+        <a href={localizePath(routes.rss(), locale)} class="social" aria-label={t(locale, 'rss.label')}>
+          <SocialIcon name="rss" />
+        </a>
+      </li>
+    )}
   </ul>
   <p>
     © {new Date().getFullYear()} {site.author.name}

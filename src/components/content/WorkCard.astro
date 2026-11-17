@@ -1,5 +1,10 @@
 ---
-/** One Work as a square tile of whole grid cells: cover above, status, title and summary below. */
+/**
+ * One Work as a compact card: a 48px square cover thumbnail (pixelated at rest by work-tiles.ts)
+ * beside its status, title and summary. Hovering or focusing the card draws a marker scribble: a
+ * hand-drawn box round the card and one to three arrows pointing in, dealt afresh by work-tiles.ts
+ * for every hover. The SVG starts empty, so without script there is no scribble.
+ */
 import ResponsiveImage from '@/components/media/ResponsiveImage.astro';
 import type { Locale } from '@/i18n/config';
 import { localizePath } from '@/i18n/paths';
@@ -14,17 +19,12 @@ interface Props {
 const { work, locale } = Astro.props;
 ---
 
-<article class={work.cover ? 'work' : 'work work--plain'}>
+<article class={work.cover ? 'work' : 'work work--plain'} data-reveal>
   <a href={localizePath(routes.work(work.slug), locale)} class="work__link">
     {work.cover && (
       <span class="work__cover">
-        <ResponsiveImage
-          src={work.cover}
-          alt={work.coverAlt}
-          widths={[480, 960]}
-          sizes="(min-width: 768px) 384px, 288px"
-          pictureClass="tile__picture"
-        />
+        <ResponsiveImage src={work.cover} alt={work.coverAlt} widths={[96, 144]} sizes="48px" />
+        <canvas class="work__pixels" aria-hidden="true"></canvas>
       </span>
     )}
     <div class="work__text">
@@ -38,7 +38,7 @@ const { work, locale } = Astro.props;
       <p class="work__summary" lang={work.locale}>
         {work.summary}
       </p>
-      {!work.cover && work.stack.length > 0 && <p class="work__stack meta">{work.stack.join(', ')}</p>}
     </div>
   </a>
+  <svg class="scribble" aria-hidden="true"></svg>
 </article>

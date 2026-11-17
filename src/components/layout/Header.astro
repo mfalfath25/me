@@ -1,7 +1,7 @@
 ---
 /**
  * The rail: a stacked text column on the left. Signature (home link), the main nav, then the
- * theme and language switches and the colophon at its foot. No panel, no border: it sits on the
+ * handwritten autograph, the theme and language switches and the colophon at its foot. No panel, no border: it sits on the
  * grid like everything else. On phones it becomes a two-row block above the page.
  */
 import type { Locale } from '@/i18n/config';
@@ -11,9 +11,9 @@ import { routes } from '@/lib/routes';
 import { site } from '@/lib/site';
 
 import Footer from './Footer.astro';
+import Autograph from './Autograph.astro';
 import LanguageToggle from './LanguageToggle.astro';
 import Signature from './Signature.astro';
-import ThemeToggle from './ThemeToggle.astro';
 
 interface Props {
   locale: Locale;
@@ -49,8 +49,8 @@ const nav = [
     </ul>
   </nav>
   <div class="rail__foot">
-    <ThemeToggle locale={locale} />
-    <LanguageToggle locale={locale} />
+    <Autograph locale={locale} />
+    {site.languageSwitch && <LanguageToggle locale={locale} />}
     <Footer locale={locale} />
   </div>
 </header>

@@ -10,6 +10,8 @@
   /* Faces: one family, the Owner's choice. */
   --font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-display: var(--font-body);
+  /* The menu titles: the h1 of each page the rail links to (Writing, Archive, Works, Readme). */
+  --font-menu-title: 'Manufacturing Consent', var(--font-display);
   --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Type: two sizes far apart, hierarchy from weight and colour. */
@@ -33,8 +35,16 @@
   --rail-cells: 3;
   --tile-cols: 3;
   --work-cols: 4;
+  /* A Work card's cover thumbnail, a square. */
+  --work-thumb: 48px;
 
   /* Spacing scale. */
+  /* The Mark, the home link at the top of the rail: a square this wide and tall. Change it here. */
+  --mark-size: 48px;
+  /* How far the Mark sits below the top of the rail on desktop, so its top edge lines up with the
+     tops of the page title's capitals: the page head's padding, plus the gap from the top of a
+     --text-lead line to the top of its capitals (0.236 of the size in Helvetica Neue). */
+  --mark-drop: calc(var(--inset) + var(--text-lead) * 0.236);
   --space-3xs: 2px;
   --space-2xs: 4px;
   --space-xs: 8px;
@@ -62,6 +72,8 @@
   --dur-field-in: 1.2s;
   --dur-mark-edge: 1.1s;
   --dur-mark-fill: 0.5s;
+  --dur-autograph: 0.9s; /* the autograph's pen stroke */
+  --dur-scribble: 0.42s; /* the marker box round a hovered Work card */
 
   /* Layers. */
   --z-field: 0;
@@ -83,6 +95,7 @@
   --color-magma-glow: oklch(70% 0.14 10);
   --color-accent: var(--color-magma);
   --color-accent-text: var(--color-magma-plum);
+  --color-marker: var(--color-accent);
   --color-focus: var(--color-magma-plum);
   /* The photo dither ramp, shadow to highlight. It climbs through the magma hues, so a
      dithered photo reads as a gradient: indigo, plum, raspberry, peach, cream. */

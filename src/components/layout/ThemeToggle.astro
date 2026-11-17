@@ -1,6 +1,9 @@
 ---
 /**
- * Light / dark switch. The choice is stored in localStorage and applied before first paint by
+ * Light / dark switch, at the top right of the page: a thin-edged rectangle with a block inside
+ * that sits left (light) or right (dark). A click flips it; pressing and dragging slides the block
+ * under the pointer, and letting go picks the side it is nearer. The choice is stored in
+ * localStorage and applied before first paint by
  * the inline script in BaseLayout; with no choice stored the page follows the system setting.
  * Hidden when scripting is off (see `[data-theme-switch]` in global.css).
  */
@@ -13,14 +16,19 @@ interface Props {
 const { locale } = Astro.props;
 ---
 
-<div class="switch" role="group" aria-label={t(locale, 'theme.label')} data-theme-switch>
-  <button type="button" class="switch__opt" data-set-theme="light" aria-pressed="false">
-    {t(locale, 'theme.light')}
-  </button>
-  <button type="button" class="switch__opt" data-set-theme="dark" aria-pressed="false">
-    {t(locale, 'theme.dark')}
-  </button>
-</div>
+<button
+  type="button"
+  class="tswitch"
+  role="switch"
+  aria-checked="false"
+  aria-label={t(locale, 'theme.dark')}
+  data-theme-switch
+>
+  <svg viewBox="0 0 30 12" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1">
+    <rect x="0.5" y="0.5" width="29" height="11"></rect>
+    <rect class="tswitch__half" x="3" y="3" width="12" height="6" fill="currentColor" stroke="none"></rect>
+  </svg>
+</button>
 
 <script>
   type Theme = 'light' | 'dark';
@@ -34,33 +42,75 @@ const { locale } = Astro.props;
         ? 'dark'
         : 'light';
 
+  const toggle = document.querySelector<HTMLButtonElement>('[data-theme-switch]');
+
   const sync = () => {
-    const theme = current();
-    document.querySelectorAll<HTMLButtonElement>('[data-set-theme]').forEach((button) => {
-      button.setAttribute('aria-pressed', String(button.dataset.setTheme === theme));
-    });
+    toggle?.setAttribute('aria-checked', String(current() === 'dark'));
   };
 
-  document.querySelectorAll<HTMLButtonElement>('[data-set-theme]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const theme = button.dataset.setTheme as Theme;
-      if (theme === current()) return;
-      const apply = () => {
-        root.dataset.theme = theme;
-        try {
-          localStorage.setItem('theme', theme);
-        } catch {
-          /* storage blocked: the choice lasts for this page only */
-        }
-        sync();
-      };
-      // A short crossfade, so the switch reads as one change rather than a flash.
-      const quiet = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (document.startViewTransition && !quiet) document.startViewTransition(apply);
-      else apply();
-    });
+  const setTheme = (theme: Theme) => {
+    if (theme === current()) return sync();
+    const apply = () => {
+      root.dataset.theme = theme;
+      try {
+        localStorage.setItem('theme', theme);
+      } catch {
+        /* storage blocked: the choice lasts for this page only */
+      }
+      sync();
+    };
+    // A short crossfade, so the switch reads as one change rather than a flash.
+    const quiet = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (document.startViewTransition && !quiet) document.startViewTransition(apply);
+    else apply();
+  };
+
+  // Drag: the block follows the pointer while it is held; on release it settles on the nearer side.
+  // A press that barely moves stays a plain click.
+  const TRAVEL = 12; // css px from the light side to the dark side (the svg is drawn 1:1)
+  const half = toggle?.querySelector<SVGRectElement>('.tswitch__half');
+  let drag: { id: number; x: number; from: number; at: number; moved: boolean } | null = null;
+  let swallowClick = false;
+
+  toggle?.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    const from = current() === 'dark' ? TRAVEL : 0;
+    drag = { id: event.pointerId, x: event.clientX, from, at: from, moved: false };
+    toggle.setPointerCapture(event.pointerId);
+  });
+
+  toggle?.addEventListener('pointermove', (event) => {
+    if (!drag || event.pointerId !== drag.id || !half) return;
+    const dx = event.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) < 3) return;
+    drag.moved = true;
+    toggle.classList.add('is-dragging');
+    drag.at = Math.min(TRAVEL, Math.max(0, drag.from + dx));
+    half.style.transform = `translateX(${drag.at}px)`;
+  });
+
+  const release = (event: PointerEvent) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const { moved, at } = drag;
+    drag = null;
+    toggle?.classList.remove('is-dragging');
+    if (!moved) return;
+    // The drag decides; the click that follows the release must not flip it back.
+    swallowClick = true;
+    setTimeout(() => (swallowClick = false), 0);
+    if (half) half.style.transform = '';
+    setTheme(at > TRAVEL / 2 ? 'dark' : 'light');
+  };
+  toggle?.addEventListener('pointerup', release);
+  toggle?.addEventListener('pointercancel', release);
+
+  toggle?.addEventListener('click', () => {
+    if (swallowClick) return;
+    setTheme(current() === 'dark' ? 'light' : 'dark');
   });
 
   system.addEventListener('change', sync);
   sync();
+  // Animate only changes the visitor makes, not the state read at load.
+  requestAnimationFrame(() => requestAnimationFrame(() => toggle?.classList.add('is-ready')));
 </script>

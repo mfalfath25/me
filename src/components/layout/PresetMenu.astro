@@ -1,0 +1,58 @@
+---
+/**
+ * The preset menu: a faint square in the bottom right corner that opens a list of Dither Presets
+ * for the photo cards (src/scripts/presets.ts). The list is a native popover, so it opens, closes
+ * on Escape and on a click outside, without script; the script only applies the pick and keeps
+ * it in this browser. Shown only with script (`.js .presets`), as the pick does nothing without.
+ * Turned off in site.presetMenu.
+ */
+import type { Locale } from '@/i18n/config';
+import { t } from '@/i18n/ui';
+import { DEFAULT_PRESET, PRESETS } from '@/scripts/presets';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+---
+
+<div class="presets">
+  <button type="button" class="presets__toggle" popovertarget="presets-panel" aria-label={t(locale, 'presets.open')}>
+    <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false" fill="currentColor">
+      <rect x="0" y="0" width="4" height="4"></rect>
+      <rect x="8" y="0" width="4" height="4"></rect>
+      <rect x="4" y="4" width="4" height="4"></rect>
+      <rect x="0" y="8" width="4" height="4"></rect>
+      <rect x="8" y="8" width="4" height="4"></rect>
+    </svg>
+  </button>
+  <div id="presets-panel" class="presets__panel" popover>
+    <fieldset class="presets__list">
+      <legend class="presets__title">{t(locale, 'presets.title')}</legend>
+      {PRESETS.map((preset) => (
+        <label class="presets__item">
+          <input
+            type="radio"
+            name="dither-preset"
+            value={preset.id}
+            checked={preset.id === DEFAULT_PRESET}
+            data-preset
+          />
+          <span>{preset.label}</span>
+        </label>
+      ))}
+    </fieldset>
+  </div>
+</div>
+
+<script>
+  import { storedPreset, storePreset } from '@/scripts/presets';
+
+  const current = storedPreset().id;
+  document.querySelectorAll<HTMLInputElement>('[data-preset]').forEach((input) => {
+    input.checked = input.value === current;
+    input.addEventListener('change', () => {
+      if (input.checked) storePreset(input.value);
+    });
+  });
+</script>

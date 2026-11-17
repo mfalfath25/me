@@ -15,6 +15,15 @@
 @import 'tailwindcss';
 @import './tokens.css';
 
+/* Manufacturing Consent (SIL Open Font License), latin subset, self-hosted. */
+@font-face {
+  font-family: 'Manufacturing Consent';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/manufacturing-consent-latin.woff2') format('woff2');
+}
+
 /* ------------------------------------------------------------------ base */
 
 :root[data-theme='light'] {
@@ -138,8 +147,11 @@ button {
   .notice,
   .inline-list,
   .signature-link,
-  .rail__nav,
-  .rail__foot
+  .rail__link,
+  .autograph,
+  .tswitch,
+  .colophon ul,
+  .colophon p
 ) {
   position: relative;
 }
@@ -157,8 +169,11 @@ button {
   .notice,
   .inline-list,
   .signature-link,
-  .rail__nav,
-  .rail__foot
+  .rail__link,
+  .autograph,
+  .tswitch,
+  .colophon ul,
+  .colophon p
 )::before {
   content: '';
   position: absolute;
@@ -200,8 +215,11 @@ html.frost-in-field
     .notice,
     .inline-list,
     .signature-link,
-    .rail__nav,
-    .rail__foot
+    .rail__link,
+    .autograph,
+    .tswitch,
+    .colophon ul,
+    .colophon p
   )::before {
   visibility: hidden;
   background: none;
@@ -301,13 +319,19 @@ body::after {
 
 .signature-link {
   display: block;
-  inline-size: calc(var(--cell) - var(--inset) * 2);
+  inline-size: var(--mark-size);
+  block-size: var(--mark-size);
+}
+@media (min-width: 48rem) {
+  .signature-link {
+    margin-block-start: var(--mark-drop);
+  }
 }
 
 .signature {
   display: block;
   inline-size: 100%;
-  block-size: auto;
+  block-size: 100%;
   overflow: visible;
 }
 
@@ -392,7 +416,7 @@ body::after {
 }
 
 /* Hovering a link runs an underline across it like a progress bar: it fills from the left and,
-   on leaving, drains out to the right. The current page has none; its accent colour marks it. */
+   on leaving, drains out to the right. The current page keeps its underline, full, in its accent. */
 .rail__link::after {
   content: '';
   position: absolute;
@@ -411,21 +435,159 @@ body::after {
   }
 }
 .rail__link[aria-current='page']::after {
-  display: none;
+  transform: scaleX(1);
 }
 
-/* The foot: the two switches, then the colophon under a short hairline; every line keeps one
-   rhythm. */
+/* The autograph: one pen stroke over the switches, one cell's content wide like the mark above the
+   nav. Drawn on the first page of a visit, then at rest; a click draws it again (Autograph.astro).
+   Phones skip it to keep the top block compact. */
+.autograph {
+  display: block;
+  inline-size: calc(var(--cell) - var(--inset) * 2);
+  margin: 0 0 var(--space-2xs);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  transform-origin: left center;
+  transition:
+    color var(--dur-micro) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+.autograph svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  overflow: visible;
+}
+@media (hover: hover) and (pointer: fine) {
+  .autograph:hover {
+    color: var(--color-ink);
+  }
+}
+.autograph:active {
+  transform: scale(0.97);
+}
+.autograph__path {
+  stroke: currentColor;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  animation: autograph var(--dur-autograph) var(--ease-pen) 0.3s both;
+}
+.signed .autograph__path {
+  animation: none;
+}
+@keyframes autograph {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* The foot: the autograph, then the colophon; every line keeps one rhythm. */
 .rail__foot {
   margin-block-start: auto;
   display: flex;
   flex-direction: column;
+  /* Each item hugs its content, so its frosted patch is no wider than it. */
+  align-items: flex-start;
   gap: var(--space-2xs);
 }
 
 .switch {
   display: flex;
   gap: var(--space-sm);
+}
+
+/* Reveal (src/scripts/reveal.ts): Photos, Post rows and Work tiles fade in as they come into view,
+   both ways: up from below when scrolling down, down from above when scrolling up. Hidden only once the script is running; `translate` and opacity, so a card's own hover
+   transform is left alone. */
+[data-reveal] {
+  transition:
+    opacity var(--dur-long) var(--ease-out) var(--reveal-delay, 0ms),
+    translate var(--dur-long) var(--ease-out) var(--reveal-delay, 0ms);
+}
+.js.reveal-ready [data-reveal]:not(.is-revealed) {
+  opacity: 0;
+  translate: 0 var(--space-xs);
+}
+/* Scrolling back up, a card drops into place from above instead. */
+.js.reveal-ready [data-reveal][data-reveal-from='above']:not(.is-revealed) {
+  translate: 0 calc(var(--space-xs) * -1);
+}
+
+/* The theme switch, at the top right of the page on every screen, its top level with the mark's:
+   a thin-edged rectangle with a block inside, which can be clicked or dragged across. The block sits left in light and right in dark. Hovering nudges it toward the other side; pressing squeezes the whole switch.
+   Transform only, and only after load, so the state read at load never animates. */
+/* `.frame >` outranks the frost rule's `position: relative`. */
+.frame > .tswitch {
+  position: absolute;
+  inset-block-start: calc(var(--cell) + var(--mark-drop));
+  inset-inline-end: calc(var(--cell) + var(--inset));
+  z-index: 1;
+}
+.tswitch {
+  display: block;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color var(--dur-short) var(--ease-out);
+}
+.tswitch svg {
+  display: block;
+  inline-size: 30px;
+  block-size: 12px;
+  overflow: visible;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+.tswitch:active svg {
+  transform: scale(0.94);
+}
+.tswitch[aria-checked='true'] .tswitch__half {
+  transform: translateX(12px);
+}
+.tswitch.is-ready .tswitch__half {
+  transition: transform var(--dur-long) var(--ease-out);
+}
+/* While dragged the block follows the pointer exactly (set inline by ThemeToggle.astro). */
+.tswitch.is-dragging .tswitch__half {
+  transition: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tswitch:hover {
+    color: var(--color-ink);
+  }
+  .tswitch[aria-checked='false']:hover .tswitch__half {
+    transform: translateX(2px);
+  }
+  .tswitch[aria-checked='true']:hover .tswitch__half {
+    transform: translateX(10px);
+  }
+}
+
+/* The asterisk between EN and ID: six spokes, turning a notch while the switch is hovered. */
+.switch__star {
+  inline-size: 9px;
+  block-size: 9px;
+  align-self: center;
+  color: var(--color-muted);
+  opacity: 0.7;
+  transition: transform var(--dur-long) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .switch:hover .switch__star {
+    transform: rotate(60deg);
+  }
 }
 
 .switch__opt {
@@ -463,10 +625,7 @@ body::after {
   flex-direction: column;
   gap: var(--space-3xs);
   margin-block-start: var(--space-sm);
-  padding-block-start: var(--space-sm);
   color: var(--color-muted);
-  background: linear-gradient(var(--color-rule), var(--color-rule)) no-repeat left top /
-    calc(var(--cell) - var(--inset) * 2) 1px;
 }
 .colophon ul {
   display: flex;
@@ -477,6 +636,21 @@ body::after {
 }
 .colophon a {
   padding-block: var(--space-3xs);
+}
+/* Icons for GitHub, Instagram and the feed: they darken on hover and squeeze on press. */
+.colophon .social {
+  display: inline-flex;
+  transition:
+    color var(--dur-micro) ease,
+    transform var(--dur-short) var(--ease-out);
+}
+.social__icon {
+  display: block;
+  inline-size: 18px;
+  block-size: 18px;
+}
+.colophon .social:active {
+  transform: scale(0.9);
 }
 .colophon a:hover {
   color: var(--color-ink);
@@ -497,9 +671,6 @@ body::after {
     gap: var(--space-lg) var(--space-sm);
     padding: var(--cell) var(--inset) var(--inset);
   }
-  .signature-link {
-    inline-size: calc(var(--cell) * 2 - var(--inset) * 2);
-  }
   .rail > nav {
     grid-column: 1 / -1;
   }
@@ -515,8 +686,35 @@ body::after {
     align-items: end;
     gap: var(--space-2xs);
   }
-  .colophon {
+  .autograph,
+  .colophon p {
     display: none;
+  }
+  /* On phones the switch keeps its size and corner, level with the top of the mark. */
+  .frame > .tswitch {
+    inset-block-start: var(--cell);
+    inset-inline-end: var(--inset);
+  }
+  /* The social icons float at the foot of the screen, centred, clear of the home indicator. */
+  .colophon {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+    z-index: var(--z-sticky-nav);
+    align-items: center;
+    margin: 0;
+    pointer-events: none;
+  }
+  .colophon ul {
+    gap: var(--space-sm);
+    padding: var(--space-3xs) var(--space-xs);
+    border: 1px solid var(--color-rule);
+    background: var(--color-paper);
+    pointer-events: auto;
+  }
+  .colophon .social__icon {
+    inline-size: 16px;
+    block-size: 16px;
   }
 }
 
@@ -540,6 +738,11 @@ body::after {
   font-weight: var(--weight-regular);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-display);
+}
+
+.title--menu {
+  font-family: var(--font-menu-title);
+  letter-spacing: 0;
 }
 
 .lede {
@@ -1062,50 +1265,84 @@ body::after {
 
 /* --------------------------------------------------------------- works */
 
+/* Compact cards in an even grid: a small pixelated thumbnail beside the words. Hovering or focusing
+   a card draws a marker scribble round it (a hand-drawn box, then one to three arrows) and quiets
+   the other cards. */
 .works {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(0, calc(var(--cell) * var(--work-cols))));
-  grid-auto-rows: calc(var(--cell) * var(--work-cols));
+  row-gap: var(--space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
 }
-
 .work {
+  position: relative;
   min-width: 0;
   padding: var(--inset);
 }
 
 .work__link {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: var(--work-thumb) minmax(0, 1fr);
+  align-items: start;
   gap: var(--space-sm);
-  block-size: 100%;
+  padding: var(--space-sm);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    opacity var(--dur-short) var(--ease-out);
 }
-
-/* A Work without a cover is a text tile: no empty picture, the words start at the top and the
-   summary and the stack have room. */
 .work--plain .work__link {
-  grid-template-rows: auto;
-  align-content: start;
+  grid-template-columns: minmax(0, 1fr);
 }
-.work--plain .work__summary {
-  -webkit-line-clamp: 5;
-}
-.work__stack {
-  margin-block-start: var(--space-xs);
+@media (hover: hover) and (pointer: fine) {
+  .works:has(.work__link:hover) .work__link:not(:hover) {
+    opacity: 0.45;
+  }
 }
 
 .work__cover {
+  position: relative;
   display: block;
-  min-block-size: 0;
+  inline-size: var(--work-thumb);
+  block-size: var(--work-thumb);
   overflow: hidden;
 }
-
+.work__cover picture {
+  display: block;
+  block-size: 100%;
+}
 .work__cover img {
+  display: block;
   inline-size: 100%;
   block-size: 100%;
   object-fit: cover;
+  transition: opacity var(--dur-short) var(--ease-out);
+}
+
+/* The mosaic at rest: one canvas pixel per block, scaled up hard-edged. Hover and keyboard focus
+   step it finer in JS, then `is-clear` lets the cover through. */
+.work__pixels {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+  opacity: 0;
+  transition: opacity var(--dur-short) var(--ease-out);
+}
+.work__cover.is-pixelated .work__pixels {
+  opacity: 1;
+}
+.work__cover.is-pixelated img {
+  opacity: 0;
+}
+.work__cover.is-pixelated.is-clear .work__pixels {
+  opacity: 0;
+}
+.work__cover.is-pixelated.is-clear img {
+  opacity: 1;
 }
 
 .work__text {
@@ -1126,6 +1363,48 @@ body::after {
   -webkit-line-clamp: 2;
   overflow: hidden;
   color: var(--color-muted);
+}
+/* Two lines are kept for every summary, so the cards in a row are the same height. */
+.work__summary {
+  min-block-size: 2lh;
+}
+
+/* The marker scribble, dealt afresh for each hover by work-tiles.ts. Each stroke has a path length
+   of 1 and is dashed out of sight; hovering draws them in turn (`--at` and `--len` are multiples of
+   --dur-scribble, set per stroke). Leaving fades it, then rubs the strokes out unseen. */
+.scribble {
+  position: absolute;
+  inset: calc(var(--inset) - var(--space-3xs));
+  inline-size: calc(100% - (var(--inset) - var(--space-3xs)) * 2);
+  block-size: calc(100% - (var(--inset) - var(--space-3xs)) * 2);
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--color-marker);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: opacity var(--dur-short) var(--ease-out);
+}
+.scribble path {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0s linear var(--dur-short);
+}
+.work__link:is(:hover, :focus-visible) ~ .scribble {
+  opacity: 1;
+  transition: none;
+}
+.work__link:is(:hover, :focus-visible) ~ .scribble path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset calc(var(--dur-scribble) * var(--len, 1)) var(--ease-pen)
+    calc(var(--dur-scribble) * var(--at, 0));
+}
+@media (prefers-reduced-motion: reduce) {
+  .work__link:is(:hover, :focus-visible) ~ .scribble path {
+    transition: none;
+  }
 }
 
 /* ------------------------------------------------------------ detail pages */
@@ -1207,8 +1486,9 @@ body::after {
   font-size: var(--text-prose);
   line-height: var(--leading-prose);
 }
-.prose > * + * {
-  margin-block-start: 1.1em;
+/* Markdoc wraps a body in its own <article>, so the flow spacing reaches through it. */
+:is(.prose, .prose > article) > * + * {
+  margin-block-start: 1.5em;
 }
 .prose h2 {
   margin-block-start: 2.6em;
@@ -1330,7 +1610,6 @@ body::after {
 }
 
 .row__link,
-.work__link,
 .links__link {
   transition: transform var(--dur-press) var(--ease-out);
 }
@@ -1376,8 +1655,103 @@ body::after {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .autograph__path {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
   body::after {
     animation: none !important;
     opacity: var(--noise-opacity-low);
   }
+}
+
+/* ------------------------------------------------------------ presets */
+
+/* The preset menu (PresetMenu.astro): a faint square in the bottom right corner, opening a list of
+   Dither Presets for the photo cards. Only with script, as a pick does nothing without. */
+.presets {
+  display: none;
+}
+.js .presets {
+  display: block;
+  position: fixed;
+  inset-block-end: calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
+  inset-inline-end: var(--space-sm);
+  z-index: var(--z-sticky-nav);
+}
+
+.presets__toggle {
+  display: grid;
+  place-items: center;
+  padding: var(--space-2xs);
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  opacity: 0.25;
+  transition: opacity var(--dur-micro) ease;
+}
+.presets__toggle svg {
+  inline-size: 8px;
+  block-size: 8px;
+}
+.presets__toggle:hover,
+.presets__toggle:focus-visible,
+.presets:has(.presets__panel:popover-open) .presets__toggle {
+  opacity: 1;
+}
+
+.presets__panel {
+  position: fixed;
+  inset: auto var(--space-sm) calc(var(--space-sm) * 2 + var(--space-md) + env(safe-area-inset-bottom, 0px)) auto;
+  margin: 0;
+  max-block-size: calc(100dvh - var(--space-3xl));
+  overflow-y: auto;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--color-rule);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-size: var(--text-small);
+}
+
+.presets__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.presets__title {
+  padding: 0 0 var(--space-2xs);
+  color: var(--color-muted);
+}
+
+.presets__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding-block: var(--space-3xs);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color var(--dur-micro) ease;
+}
+.presets__item:hover,
+.presets__item:has(:checked) {
+  color: var(--color-ink);
+}
+.presets__item input {
+  inline-size: 8px;
+  block-size: 8px;
+  margin: 0;
+  appearance: none;
+  border: 1px solid currentColor;
+  cursor: pointer;
+}
+.presets__item input:checked {
+  background: currentColor;
+}
+.presets__item input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }

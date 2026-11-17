@@ -20,8 +20,12 @@ export const FROST_SELECTOR = [
   '.notice',
   '.inline-list',
   '.signature-link',
-  '.rail__nav',
-  '.rail__foot',
+  '.rail__link',
+  // The rail's foot, item by item, so each patch hugs its item rather than the whole column.
+  '.autograph',
+  '.tswitch',
+  '.colophon ul',
+  '.colophon p',
 ].join(', ');
 
 /** Class on <html> while a backdrop frosts the text itself. */

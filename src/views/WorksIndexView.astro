@@ -23,7 +23,7 @@ const title = t(locale, 'works.title');
   jsonLd={[breadcrumbLd(Astro.site!, [{ name: title, path: Astro.url.pathname }])]}
 >
   <header class="page-head">
-    <h1 class="title">{title}</h1>
+    <h1 class="title title--menu">{title}</h1>
     <p class="lede">{t(locale, 'works.description')}</p>
   </header>
   <div class="works">
@@ -31,4 +31,8 @@ const title = t(locale, 'works.title');
       <WorkCard work={work} locale={locale} />
     ))}
   </div>
+  <script>
+    import { initWorkTiles } from '@/scripts/work-tiles';
+    initWorkTiles();
+  </script>
 </BaseLayout>

@@ -5,6 +5,8 @@ import BambooField from '@/components/layout/BambooField.astro';
 import FlameField from '@/components/layout/FlameField.astro';
 import KoiPond from '@/components/layout/KoiPond.astro';
 import Header from '@/components/layout/Header.astro';
+import PresetMenu from '@/components/layout/PresetMenu.astro';
+import ThemeToggle from '@/components/layout/ThemeToggle.astro';
 import Seo, { type SeoProps } from '@/components/seo/Seo.astro';
 import { LOCALE_META } from '@/i18n/config';
 import { t } from '@/i18n/ui';
@@ -25,7 +27,12 @@ const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content={site.themeColor.light} media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content={site.themeColor.dark} media="(prefers-color-scheme: dark)" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preload" href="/fonts/manufacturing-consent-latin.woff2" as="font" type="font/woff2" crossorigin />
     <script is:inline>
       // Before first paint: stored theme, "signed" (signature already drawn this visit), js flag.
       (function () {
@@ -57,9 +64,15 @@ const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
     {site.backdrop === 'flame' ? <FlameField /> : site.backdrop === 'koi' ? <KoiPond /> : <BambooField />}
     <div class="frame">
       <Header locale={locale} />
+      <ThemeToggle locale={locale} />
       <main id="main" class="page">
         <slot />
       </main>
     </div>
+    {site.presetMenu && <PresetMenu locale={locale} />}
+    <script>
+      import { initReveal } from '@/scripts/reveal';
+      initReveal();
+    </script>
   </body>
 </html>

@@ -1,7 +1,6 @@
 ---
 import { getImage } from 'astro:assets';
 
-import ResponsiveImage from '@/components/media/ResponsiveImage.astro';
 import TagList from '@/components/content/TagList.astro';
 import TranslationNotice from '@/components/content/TranslationNotice.astro';
 import type { Locale } from '@/i18n/config';
@@ -61,6 +60,17 @@ const facts = [
     {work.isFallback && <TranslationNotice locale={locale} />}
     <!-- Overview -->
     <header class="article__head">
+      <a href={localizePath(routes.works(), locale)} class="back" aria-label={t(locale, 'works.back')}>
+        <svg class="back__arrow" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M20 12H5M11 6l-6 6 6 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="square"
+          />
+        </svg>
+      </a>
       <h1 class="title">{work.title}</h1>
       <p class="meta">{t(locale, `works.status.${work.status}`)}</p>
       <p class="lede">{work.summary}</p>
@@ -86,17 +96,6 @@ const facts = [
         </ul>
       )}
     </header>
-
-    {work.cover && (
-      <ResponsiveImage
-        src={work.cover}
-        alt={work.coverAlt}
-        widths={[640, 1024, 1600]}
-        sizes="(min-width: 1024px) 960px, 100vw"
-        priority
-        class="article__cover"
-      />
-    )}
 
     <!-- Details -->
     <div class="prose article__body">

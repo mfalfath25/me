@@ -46,7 +46,7 @@ const large = new Map(
   data-label-next={t(locale, 'lightbox.next')}
 >
   {photos.map((photo, i) => (
-    <li id={`photo-${photo.slug}`} class="shot" data-location={photo.location ?? undefined}>
+    <li id={`photo-${photo.slug}`} class="shot" data-reveal data-location={photo.location ?? undefined}>
       <figure class="shot__figure">
         <a
           href={large.get(photo.slug)}

@@ -13,7 +13,7 @@ interface Props {
 const { post, locale } = Astro.props;
 ---
 
-<article class="row">
+<article class="row" data-reveal>
   <a href={localizePath(routes.post(post.slug), locale)} class="row__link">
     <time class="row__date" datetime={post.publishedAt.toISOString()}>
       {formatDate(post.publishedAt, locale)}
