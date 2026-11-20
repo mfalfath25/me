@@ -121,7 +121,7 @@ export function initWorkTiles() {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         if (!link.matches(':hover, :focus-visible')) deal(svg, true);
-      }, 400);
+      }, 220);
     };
     link.addEventListener('pointerleave', later);
     link.addEventListener('blur', later);

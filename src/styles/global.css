@@ -946,6 +946,12 @@ body::after {
   transition: opacity var(--dur-short) var(--ease-out);
 }
 
+/* With script, keep the plain photo hidden until its dither canvas is ready, so the unshadered
+   photo never flashes before the shader applies. If dithering fails or JS is off, it shows. */
+.js .shot__card:not(.is-dithered):not(.is-dither-failed) .shot__img {
+  opacity: 0;
+}
+
 /* The gradient dither at rest; the photo shows through on hover and keyboard focus. */
 .shot__dither {
   position: absolute;
@@ -978,31 +984,6 @@ body::after {
   }
   .shot__card.is-dithered:hover .shot__img {
     opacity: 1;
-  }
-}
-
-/* The photo's pixel size, on a small square plate of paper in the top right corner, above the
-   dots, in muted ink. It steps aside when the photo shows through. */
-.shot__size {
-  position: absolute;
-  inset-block-start: var(--space-2xs);
-  inset-inline-end: var(--space-2xs);
-  padding: var(--space-3xs) var(--space-2xs);
-  background: var(--color-paper);
-  color: var(--color-muted);
-  font-size: var(--text-small);
-  line-height: var(--leading-tight);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  pointer-events: none;
-  transition: opacity var(--dur-short) var(--ease-out);
-}
-.shot__card:focus-visible .shot__size {
-  opacity: 0;
-}
-@media (hover: hover) and (pointer: fine) {
-  .shot__card:hover .shot__size {
-    opacity: 0;
   }
 }
 
@@ -1203,6 +1184,13 @@ body::after {
 
 .lightbox__caption {
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lightbox__head {
+  display: flex;
   gap: var(--space-md);
   min-width: 0;
 }
@@ -1214,9 +1202,16 @@ body::after {
 }
 
 .lightbox__place,
+.lightbox__size,
 .lightbox__count {
   color: var(--color-scrim-muted);
   white-space: nowrap;
+}
+
+.lightbox__size {
+  font-size: var(--text-small);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
 }
 
 .lightbox__count {
@@ -1381,16 +1376,16 @@ body::after {
   pointer-events: none;
   fill: none;
   stroke: var(--color-marker);
-  stroke-width: 1.6;
+  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   opacity: 0;
-  transition: opacity var(--dur-short) var(--ease-out);
+  transition: opacity var(--dur-press) var(--ease-out);
 }
 .scribble path {
   stroke-dasharray: 1 1;
   stroke-dashoffset: 1;
-  transition: stroke-dashoffset 0s linear var(--dur-short);
+  transition: stroke-dashoffset 0s linear var(--dur-press);
 }
 .work__link:is(:hover, :focus-visible) ~ .scribble {
   opacity: 1;
@@ -1398,7 +1393,7 @@ body::after {
 }
 .work__link:is(:hover, :focus-visible) ~ .scribble path {
   stroke-dashoffset: 0;
-  transition: stroke-dashoffset calc(var(--dur-scribble) * var(--len, 1)) var(--ease-pen)
+  transition: stroke-dashoffset calc(var(--dur-scribble) * var(--len, 1)) var(--ease-out)
     calc(var(--dur-scribble) * var(--at, 0));
 }
 @media (prefers-reduced-motion: reduce) {

@@ -38,13 +38,19 @@ function dither(card: HTMLElement, force = false) {
   const img = card.querySelector('img');
   const canvas = card.querySelector<HTMLCanvasElement>('.shot__dither');
   if (!img || !canvas || !img.complete || !img.naturalWidth) return;
-  const sizeKey = `${canvas.clientWidth}x${canvas.clientHeight}`;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (!w || !h) return;
+  const sizeKey = `${w}x${h}`;
   if (!force && lastSize.get(canvas) === sizeKey) return;
   ink ??= readDitherInk();
   if (draw(canvas, img, ink)) {
     drawn.add(canvas);
     lastSize.set(canvas, sizeKey);
+    card.classList.remove('is-dither-failed');
     card.classList.add('is-dithered');
+  } else {
+    card.classList.add('is-dither-failed');
   }
 }
 

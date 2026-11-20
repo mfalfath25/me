@@ -39,9 +39,6 @@ export const site = {
   themeColor: { light: '#f9f1e2', dark: '#0b1511' },
   /** Show the EN / ID switch in the rail. Off until the Indonesian side has enough content; the /id routes still exist. */
   languageSwitch: false,
-  /** Birds and rabbits in the bamboo (src/scripts/wildlife.ts). Off for now; `?weather=birds` or
-   * `rabbits` still sends one to preview them. */
-  wildlife: false,
   /** The small preset menu in the bottom right corner, for changing the photo cards' look
    * (src/scripts/presets.ts). The pick is kept per browser. */
   presetMenu: true,

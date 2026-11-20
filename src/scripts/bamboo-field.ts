@@ -25,8 +25,6 @@
  * strength from --bamboo-strength, re-read on theme change. Capped at 30fps, paused while the
  * tab is hidden, drawn once (still, no wind) under reduced motion. No WebGL: the paper shows.
  *
- * Now and then birds cross the sky or a rabbit hops along the bottom (src/scripts/wildlife.ts).
- *
  * Weather (src/scripts/weather.ts) plays over the grove in layers of depth: the further a drop or
  * a leaf is, the smaller, slower and fainter it is drawn, and the higher up it meets the ground.
  *   Ground: two faded bands at the foot, far and near, that the rain lands on.
@@ -37,12 +35,9 @@
  *     more than one per spray), tumbles down to the very bottom of the page (depth aside) and lies
  *     there a while before it fades.
  */
-import { site } from '@/lib/site';
-
 import { makeColorReader } from './color';
 import { FROST_IN_FIELD, FROST_SELECTOR } from './frost';
 import { createWeather, parseWeatherParam } from './weather';
-import { createWildlife, parseWildlifeParam } from './wildlife';
 
 const DOT = 2;
 const FRAME_MS = 1000 / 30;
@@ -56,7 +51,7 @@ const MAX_DROPS = 420;
 const MAX_SPARKS = 300;
 const MAX_FALLERS = 48;
 /** How tall the ground is at the foot of the screen, css px; the furthest rain lands at its top. */
-const GROUND = 60;
+const GROUND = 48;
 
 // ---------------------------------------------------------------- shaders
 
@@ -348,8 +343,6 @@ export function initBambooField(canvas: HTMLCanvasElement) {
   const seed = (Math.random() * 2 ** 32) >>> 0;
   const weatherParam = new URLSearchParams(location.search).get('weather');
   const weather = createWeather(Math.random, parseWeatherParam(weatherParam));
-  // Birds and rabbits now and then (src/scripts/wildlife.ts), inked with the grove.
-  const wildlife = createWildlife(Math.random, { ...parseWildlifeParam(weatherParam), enabled: site.wildlife });
 
   let W = 1;
   let H = 1;
@@ -384,48 +377,56 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     scale = narrow ? 0.62 : Math.min(1.25, Math.max(0.8, H / 900));
     culms = [];
 
-    /** Two to six leaves, three or four most often. */
+    /** Two to five slender leaves per spray, three or four most often. */
     const LEAF_ODDS: [number, number][] = [
-      [2, 0.12],
-      [3, 0.32],
-      [4, 0.32],
-      [5, 0.16],
-      [6, 0.08],
+      [2, 0.2],
+      [3, 0.38],
+      [4, 0.3],
+      [5, 0.12],
     ];
     const leafCount = () => {
       let roll = rand();
       for (const [count, odds] of LEAF_ODDS) if ((roll -= odds) < 0) return count;
-      return 4;
+      return 3;
     };
 
-    /** A spray of leaves fanning out around `aim` (radians, relative to the branch tip). */
-    const spray = (aim: number, spread: number): Leaf[] => {
-      const leaves = leafCount();
+    /** A light spray of slender bamboo leaves fanning around `aim`. */
+    const spray = (aim: number, spread: number, sizeScale = 1, maxLeaves = 5): Leaf[] => {
+      const leaves = Math.min(maxLeaves, leafCount());
       let warmth = rand() < 0.3 ? 0.6 + rand() * 0.4 : rand() * 0.35;
       // Autumn turns the grove toward yellow.
       if (weather.autumn) warmth = 0.55 + warmth * 0.45;
       return Array.from({ length: leaves }, (_, l) => ({
-        rest: aim + (l / Math.max(1, leaves - 1) - 0.5) * spread + (rand() - 0.5) * 0.25,
+        rest: aim + (l / Math.max(1, leaves - 1) - 0.5) * spread + (rand() - 0.5) * 0.22,
         angle: 0,
         speed: 0,
-        len: (34 + rand() * 40) * scale,
-        wid: (4 + rand() * 3.5) * scale,
+        len: (28 + rand() * 34) * scale * sizeScale,
+        wid: (3.2 + rand() * 2.4) * scale * sizeScale,
         warm: Math.min(1, Math.max(0, warmth + (rand() - 0.5) * 0.3)),
         seed: rand() * 100,
       }));
     };
 
     /** A branch from a culm node: `first` is its angle off the culm, `bend` how it curves after. */
-    const branch = (node: number, segs: number, length: number, first: number, bend: number, depth: number): Branch => {
-      const b = chain(segs, length / segs, () => 0, 20, 8, 2.4 * scale, 1.2 * scale, depth) as Branch;
+    const branch = (
+      node: number,
+      segs: number,
+      length: number,
+      first: number,
+      bend: number,
+      depth: number,
+      w0 = 2.0,
+      w1 = 0.8,
+    ): Branch => {
+      const b = chain(segs, length / segs, () => 0, 20, 8, w0 * scale, w1 * scale, depth) as Branch;
       b.segs[0].rest = first;
-      for (let s = 1; s < segs; s++) b.segs[s].rest = bend + (rand() - 0.5) * 0.2;
+      for (let s = 1; s < segs; s++) b.segs[s].rest = bend + (rand() - 0.5) * 0.16;
       b.node = node;
       b.sprays = [];
       return b;
     };
 
-    // Clumps along the bottom, spaced apart, each leaning a little toward the middle.
+    // Clumps along the bottom, well spaced apart, each leaning a little toward the middle.
     const count = narrow ? 1 + (rand() < 0.6 ? 1 : 0) : 2 + (rand() < 0.7 ? 1 : 0);
     const spots: number[] = [];
     for (let tries = 0; spots.length < count && tries < 80; tries++) {
@@ -439,6 +440,7 @@ export function initBambooField(canvas: HTMLCanvasElement) {
       const pick = rand() < 0.4 ? 0 : Math.floor(rand() * spots.length);
       share[pick]++;
     }
+
     spots.forEach((fx, i) => {
       const main = i === 0;
       const clump = {
@@ -466,35 +468,57 @@ export function initBambooField(canvas: HTMLCanvasElement) {
         c.lean = -Math.PI / 2 + clump.lean + off * 2 * clump.fan + (rand() - 0.5) * 0.3;
         c.branches = [];
 
-        // Side branches along the upper culm, most nodes carrying one.
-        for (let node = Math.floor(n * (0.3 + rand() * 0.15)); node < n - 1; node++) {
-          if (rand() < 0.15) continue;
+        // Along the culm: occasional direct leaf tufts sprouting right from the node rings, and
+        // selective slender side branches on the upper nodes.
+        const branchStart = Math.floor(n * (0.34 + rand() * 0.14));
+        const tuftStart = Math.max(2, Math.floor(n * 0.22));
+        for (let node = tuftStart; node < n - 1; node++) {
           const side = rand() < 0.5 ? -1 : 1;
-          const segs = 2 + Math.floor(rand() * 2);
-          const b = branch(node, segs, (60 + rand() * 110) * scale, side * (0.55 + rand() * 0.6), side * 0.12, depth);
-          for (let at = 1; at <= segs; at++) {
-            if (at < segs && rand() < 0.4) continue;
-            b.sprays.push({ at, leaves: spray(side * 0.35, 1.3 + rand() * 0.6), dropped: false });
+          if (node >= branchStart && rand() < 0.62) {
+            const segs = 2 + Math.floor(rand() * 2);
+            const len = (55 + rand() * 95) * scale;
+            const b = branch(node, segs, len, side * (0.45 + rand() * 0.5), side * 0.1, depth);
+            for (let at = 1; at <= segs; at++) {
+              if (at < segs && rand() < 0.5) continue;
+              b.sprays.push({
+                at,
+                leaves: spray(side * 0.28, 1.05 + rand() * 0.45, at === segs ? 0.9 : 1),
+                dropped: false,
+              });
+            }
+            c.branches.push(b);
+          } else if (rand() < 0.32) {
+            // A small tuft of leaves sprouting directly off the culm segment node.
+            const stub = branch(node, 1, (8 + rand() * 10) * scale, side * (0.4 + rand() * 0.45), 0, depth, 1.2, 0.6);
+            stub.sprays.push({
+              at: 1,
+              leaves: spray(side * 0.2, 0.85 + rand() * 0.35, 0.82, 3),
+              dropped: false,
+            });
+            c.branches.push(stub);
           }
-          c.branches.push(b);
         }
 
-        // About half the culms carry a crown: short twigs fanning from the tip, each ending in a
-        // spray, and one spray straight off the tip. The rest end bare.
+        // About half the culms carry a light crown of twigs; the rest end clean or with a small tip tuft.
         if (rand() < 0.45) {
+          if (rand() < 0.45) {
+            const tip = branch(n, 1, (10 + rand() * 8) * scale, (rand() - 0.5) * 0.25, 0, depth, 1.1, 0.5);
+            tip.sprays.push({ at: 1, leaves: spray(0, 0.75, 0.85, 3), dropped: false });
+            c.branches.push(tip);
+          }
           culms.push(c);
           continue;
         }
-        const twigs = 2 + Math.floor(rand() * 3);
+        const twigs = 2 + Math.floor(rand() * 2);
         for (let t = 0; t < twigs; t++) {
-          const aim = (t / Math.max(1, twigs - 1) - 0.5) * (1.2 + rand() * 0.5) + (rand() - 0.5) * 0.2;
+          const aim = (t / Math.max(1, twigs - 1) - 0.5) * (1.0 + rand() * 0.45) + (rand() - 0.5) * 0.18;
           const segs = 1 + Math.floor(rand() * 2);
-          const b = branch(n, segs, (28 + rand() * 50) * scale, aim, aim * 0.3, depth);
-          b.sprays.push({ at: segs, leaves: spray(aim * 0.6, 1.4 + rand() * 0.5), dropped: false });
+          const b = branch(n, segs, (28 + rand() * 44) * scale, aim, aim * 0.22, depth);
+          b.sprays.push({ at: segs, leaves: spray(aim * 0.45, 1.1 + rand() * 0.4, 0.9), dropped: false });
           c.branches.push(b);
         }
-        const tip = branch(n, 1, 6 * scale, 0, 0, depth);
-        tip.sprays.push({ at: 1, leaves: spray(0, 1.1 + rand() * 0.4), dropped: false });
+        const tip = branch(n, 1, (10 + rand() * 8) * scale, 0, 0, depth, 1.2, 0.5);
+        tip.sprays.push({ at: 1, leaves: spray(0, 0.85, 0.85, 4), dropped: false });
         c.branches.push(tip);
 
         culms.push(c);
@@ -532,11 +556,10 @@ export function initBambooField(canvas: HTMLCanvasElement) {
       drops = [];
       sparks = [];
       fallers = [];
-      wildlife.clear();
     } else {
       // Mobile browser toolbars change viewport height on scroll: keep the grove rooted at the
       // bottom instead of regrowing it on every scroll.
-      for (const c of culms) c.rootY = H + 8;
+      for (const c of culms) c.rootY = H + 6;
     }
     pose();
   }
@@ -666,7 +689,6 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     weather.update(dt);
     const rand = Math.random;
     const drift = breezeAt(t);
-    wildlife.update(dt, W, H, scale, drift);
 
     // Rain: new drops across the top, more as the shower builds, in three layers of depth.
     rainDue += weather.rain * 240 * (W / 1440) * dt;
@@ -856,21 +878,21 @@ export function initBambooField(canvas: HTMLCanvasElement) {
   const culmInk = (c: Culm) => 0.62 - c.depth * 0.3;
   const leafInk = (c: Culm, l: Leaf) => (culmInk(c) + 0.12) * (0.75 + 0.35 * ((l.seed * 7) % 1));
 
-  /** The ground the grove stands on: two faded bands of ink, a faint far one reaching up to where the
-   * furthest rain lands and a nearer, denser one at the foot, so the ground recedes as the rain
-   * and the fallen leaves do. Its top edge rolls a little, as earth does. */
+  /** The ground the grove stands on: two softly rolling faded ink bands at the foot, a fainter
+   * far bank reaching up to where distant rain lands and a firmer near bank anchoring the roots. */
   function ground() {
-    const bands: [number, number, number][] = [
-      // height (css px), ink at the foot, warmth
-      [GROUND, 0.035, 0.6],
-      [GROUND * 0.4, 0.04, 0.45],
+    const bands: [number, number, number, number][] = [
+      // height (css px), ink at the foot, warmth, noise offset
+      [GROUND, 0.08, 0.5, 11],
+      [GROUND * 0.48, 0.14, 0.38, 47],
     ];
-    const cols = 32;
-    for (const [rise, ink, warm] of bands) {
+    const cols = 48;
+    for (const [rise, ink, warm, off] of bands) {
       for (let i = 0; i < cols; i++) {
         const x0 = (i / cols) * W;
         const x1 = ((i + 1) / cols) * W;
-        const top = (x: number) => H - rise * (0.8 + 0.4 * noise1(x / 260 + rise));
+        const top = (x: number) =>
+          H - rise * (0.72 + 0.38 * noise1(x / 240 + off) + 0.14 * noise1(x / 85 + off * 2));
         const t0 = top(x0);
         const t1 = top(x1);
         vert(x0, t0, warm, 0);
@@ -928,10 +950,7 @@ export function initBambooField(canvas: HTMLCanvasElement) {
   }
 
   /** Rain, splashes and fallen leaves, over the grove. Ink fades and strokes thin with depth. */
-  const pen = { stroke, tri };
-
   function buildWeather() {
-    wildlife.draw(pen, H - 2);
     const showing = Math.min(1, weather.rain * 1.5 + 0.35);
     for (const d of drops) {
       const k = near(d.z);

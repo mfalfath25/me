@@ -73,7 +73,7 @@
   --dur-mark-edge: 1.1s;
   --dur-mark-fill: 0.5s;
   --dur-autograph: 0.9s; /* the autograph's pen stroke */
-  --dur-scribble: 0.42s; /* the marker box round a hovered Work card */
+  --dur-scribble: 0.24s; /* the marker box round a hovered Work card */
 
   /* Layers. */
   --z-field: 0;

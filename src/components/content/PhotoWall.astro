@@ -6,9 +6,9 @@
  * pointer the photo shows through and the card answers as `site.cardHover` says
  * (src/scripts/photo-wall.ts): `pop` eases it up a little; `foil` lifts and tilts it toward the
  * cursor under a glare and a sheen. A click morphs the card into the lightbox slideshow
- * (src/scripts/lightbox.ts). Each card links to a large rendition, so without script it simply
- * opens the image, and the plain photo shows instead of the dots. The photo's pixel size sits in a
- * small plate at its top right.
+ * A click morphs the card into the lightbox slideshow (src/scripts/lightbox.ts), which shows the
+ * photo's pixel size under its title. Each card links to a large rendition, so without script it
+ * simply opens the image, and the plain photo shows instead of the dots.
  */
 import { getImage } from 'astro:assets';
 
@@ -71,9 +71,6 @@ const large = new Map(
           <canvas class="shot__dither" aria-hidden="true"></canvas>
           <span class="shot__foil" aria-hidden="true"></span>
           <span class="shot__glare" aria-hidden="true"></span>
-          <span class="shot__size" aria-hidden="true">
-            {photo.image.width}×{photo.image.height}
-          </span>
         </a>
         <figcaption class="shot__caption">
           <span class="shot__title">{photo.title}</span>

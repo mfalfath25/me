@@ -28,6 +28,7 @@ interface Parts {
   dither: HTMLCanvasElement;
   title: HTMLElement;
   place: HTMLElement;
+  size: HTMLElement;
   count: HTMLElement;
   prev: HTMLButtonElement;
   next: HTMLButtonElement;
@@ -74,9 +75,12 @@ function build(labels: Labels): Parts {
   const bar = el('div', 'lightbox__bar');
   const caption = el('figcaption', 'lightbox__caption');
   caption.setAttribute('aria-live', 'polite');
+  const head = el('span', 'lightbox__head');
   const title = el('span', 'lightbox__title');
   const place = el('span', 'lightbox__place');
-  caption.append(title, place);
+  head.append(title, place);
+  const size = el('span', 'lightbox__size');
+  caption.append(head, size);
 
   const controls = el('div', 'lightbox__controls');
   const prev = button('lightbox__btn', labels.prev);
@@ -133,7 +137,7 @@ function build(labels: Labels): Parts {
     if (dialog.open) fit();
   });
 
-  return { dialog, frame, img, dither, title, place, count, prev, next };
+  return { dialog, frame, img, dither, title, place, size, count, prev, next };
 }
 
 /** Size the frame to fit the viewport at the current photo's ratio. */
@@ -144,7 +148,7 @@ function fit() {
   const h = Number(card.dataset.h) || 2;
   const pad = window.innerWidth < 768 ? 16 : 64;
   const maxW = window.innerWidth - pad * 2;
-  const maxH = window.innerHeight - pad * 2 - 48; // room for the caption and controls
+  const maxH = window.innerHeight - pad * 2 - 64; // room for the caption, size and controls
   const scale = Math.min(maxW / w, maxH / h, 1.6);
   parts.frame.style.inlineSize = `${Math.round(w * scale)}px`;
   parts.frame.style.blockSize = `${Math.round(h * scale)}px`;
@@ -155,12 +159,17 @@ function fill() {
   if (!parts) return;
   const card = current();
   const thumb = card.querySelector('img');
-  const { img, title, place, count, dialog } = parts;
+  const { img, title, place, size, count, dialog } = parts;
   const mine = ++token;
   img.src = thumb ? thumb.currentSrc || thumb.src : card.href;
   img.alt = thumb?.alt ?? '';
   title.textContent = card.dataset.title ?? '';
   place.textContent = card.dataset.place ?? '';
+  place.hidden = !place.textContent;
+  const w = card.dataset.w;
+  const h = card.dataset.h;
+  size.textContent = w && h ? `${w}×${h}` : '';
+  size.hidden = !size.textContent;
   count.textContent = `${index + 1} / ${cards.length}`;
   dialog.setAttribute('aria-label', card.dataset.title ?? img.alt);
   const multiple = cards.length > 1;
