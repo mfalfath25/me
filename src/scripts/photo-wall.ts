@@ -18,7 +18,9 @@ import { findPreset, type Preset, PRESET_EVENT, storedPreset } from './presets';
 let ink: DitherInk | null = null;
 let preset: Preset = storedPreset();
 let font = '';
+let listenersBound = false;
 const drawn = new Set<HTMLCanvasElement>();
+const lastSize = new WeakMap<HTMLCanvasElement, string>();
 
 /** The card's look under the current Preset: braille through dither.ts, the rest through glyphs.ts. */
 function draw(canvas: HTMLCanvasElement, img: HTMLImageElement, theme: DitherInk): boolean {
@@ -26,19 +28,22 @@ function draw(canvas: HTMLCanvasElement, img: HTMLImageElement, theme: DitherInk
     if (preset.colour.mode !== 'palette') return drawDither(canvas, img, theme);
     const { stops } = preset.colour;
     const paper = preset.paper === 'theme' ? theme.paper : preset.paper;
-    return drawDither(canvas, img, { ramp: [stops[0], ...stops], paper, lightPaper: false });
+    return drawDither(canvas, img, { ramp: [stops[0]!, ...stops], paper, lightPaper: false });
   }
   font ||= getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim() || 'monospace';
   return drawGlyphs(canvas, img, preset, { paper: theme.paper, ramp: theme.ramp, font });
 }
 
-function dither(card: HTMLElement) {
+function dither(card: HTMLElement, force = false) {
   const img = card.querySelector('img');
   const canvas = card.querySelector<HTMLCanvasElement>('.shot__dither');
   if (!img || !canvas || !img.complete || !img.naturalWidth) return;
+  const sizeKey = `${canvas.clientWidth}x${canvas.clientHeight}`;
+  if (!force && lastSize.get(canvas) === sizeKey) return;
   ink ??= readDitherInk();
   if (draw(canvas, img, ink)) {
     drawn.add(canvas);
+    lastSize.set(canvas, sizeKey);
     card.classList.add('is-dithered');
   }
 }
@@ -56,7 +61,7 @@ function redrawAll() {
   ink = readDitherInk();
   drawn.forEach((canvas) => {
     const card = canvas.closest<HTMLElement>('.shot__card');
-    if (card) dither(card);
+    if (card) dither(card, true);
   });
 }
 
@@ -69,11 +74,14 @@ function redrawAll() {
  */
 const ROW = 4;
 function layoutMasonry(wall: HTMLElement) {
+  const shots = [...wall.querySelectorAll<HTMLElement>(':scope > .shot')];
   const place = () => {
     wall.classList.add('is-masonry');
-    for (const shot of wall.querySelectorAll<HTMLElement>(':scope > .shot')) {
-      shot.style.gridRowEnd = '';
-      shot.style.gridRowEnd = `span ${Math.ceil(shot.offsetHeight / ROW)}`;
+    // Batch DOM writes/reads/writes to trigger a single layout instead of one per card.
+    for (const shot of shots) shot.style.gridRowEnd = '';
+    const heights = shots.map((shot) => shot.offsetHeight);
+    for (let i = 0; i < shots.length; i++) {
+      shots[i]!.style.gridRowEnd = `span ${Math.ceil(heights[i]! / ROW)}`;
     }
   };
   let frame = 0;
@@ -97,11 +105,13 @@ export function initPhotoWalls() {
   const resized = new ResizeObserver((entries) => {
     for (const entry of entries) {
       const card = entry.target as HTMLElement;
-      if (card.classList.contains('is-dithered')) queued.add(card);
+      const img = card.querySelector('img');
+      if (card.classList.contains('is-dithered') || (img?.complete && img.naturalWidth)) queued.add(card);
     }
+    if (queued.size === 0) return;
     cancelAnimationFrame(pending);
     pending = requestAnimationFrame(() => {
-      queued.forEach(dither);
+      queued.forEach((card) => dither(card));
       queued.clear();
     });
   });
@@ -116,6 +126,8 @@ export function initPhotoWalls() {
     });
   });
 
+  if (listenersBound) return;
+  listenersBound = true;
   new MutationObserver(redrawAll).observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-theme'],

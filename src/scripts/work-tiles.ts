@@ -72,9 +72,10 @@ export function initWorkTiles() {
   }
 
   // Redraw at rest when a tile changes size.
+  const tileByCover = new Map<Element, Tile>(tiles.map((t) => [t.cover, t]));
   const resized = new ResizeObserver((entries) => {
     for (const entry of entries) {
-      const tile = tiles.find((t) => t.cover === entry.target);
+      const tile = tileByCover.get(entry.target);
       if (!tile || !tile.cover.classList.contains('is-pixelated')) continue;
       if (Math.round(entry.contentRect.width) === Math.round(tile.width)) continue;
       prepare(tile);
@@ -85,10 +86,14 @@ export function initWorkTiles() {
   // The marker scribbles: a viewBox in px per card, a new mark dealt on load, on resize, and after
   // each hover once the old one has faded (dealing it during a hover would show it already drawn).
   const NS = 'http://www.w3.org/2000/svg';
-  const deal = (svg: SVGSVGElement) => {
+  const lastBox = new WeakMap<SVGSVGElement, string>();
+  const deal = (svg: SVGSVGElement, force = false) => {
     const w = Math.round(svg.clientWidth);
     const h = Math.round(svg.clientHeight);
     if (!w || !h) return;
+    const key = `${w}x${h}`;
+    if (!force && lastBox.get(svg) === key) return;
+    lastBox.set(svg, key);
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
     svg.replaceChildren(
       ...scribble(w, h).map((stroke) => {
@@ -108,14 +113,14 @@ export function initWorkTiles() {
   });
   svgs.forEach((svg) => {
     const link = svg.parentElement?.querySelector<HTMLElement>('.work__link');
-    deal(svg);
+    deal(svg, true);
     sized.observe(svg);
     if (!link) return;
     let timer = 0;
     const later = () => {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
-        if (!link.matches(':hover, :focus-visible')) deal(svg);
+        if (!link.matches(':hover, :focus-visible')) deal(svg, true);
       }, 400);
     };
     link.addEventListener('pointerleave', later);

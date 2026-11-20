@@ -208,9 +208,15 @@ export function storePreset(id: string) {
   document.dispatchEvent(new CustomEvent(PRESET_EVENT, { detail: id }));
 }
 
+const rampCache = new Map<string, string[]>();
+
 /** The glyph for a brightness of `ink` (0 none to 1 full) on a densest-first ramp. */
 export function glyphFor(ramp: string, ink: number): string {
-  const chars = Array.from(ramp);
+  let chars = rampCache.get(ramp);
+  if (!chars) {
+    chars = Array.from(ramp);
+    rampCache.set(ramp, chars);
+  }
   const i = Math.round((1 - Math.min(1, Math.max(0, ink))) * (chars.length - 1));
   return chars[i] ?? ' ';
 }

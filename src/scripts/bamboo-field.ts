@@ -357,7 +357,7 @@ export function initBambooField(canvas: HTMLCanvasElement) {
   let h = 1;
   let scale = 1;
   let culms: Culm[] = [];
-  let gusts: Gust[] = [];
+  const gusts: Gust[] = [];
   let drops: Drop[] = [];
   let sparks: Spark[] = [];
   let fallers: Faller[] = [];
@@ -506,8 +506,12 @@ export function initBambooField(canvas: HTMLCanvasElement) {
 
   function layout() {
     if (!gl) return;
-    W = Math.max(1, canvas.clientWidth);
-    H = Math.max(1, canvas.clientHeight);
+    const nextW = Math.max(1, canvas.clientWidth);
+    const nextH = Math.max(1, canvas.clientHeight);
+    if (culms.length && nextW === W && nextH === H) return;
+    const widthChanged = !culms.length || nextW !== W;
+    W = nextW;
+    H = nextH;
     w = Math.ceil(W / DOT);
     h = Math.ceil(H / DOT);
     canvas.width = w;
@@ -522,13 +526,19 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    grow();
+    if (widthChanged) {
+      grow();
+      // A new grove: what was in the air or on the ground belonged to the old one.
+      drops = [];
+      sparks = [];
+      fallers = [];
+      wildlife.clear();
+    } else {
+      // Mobile browser toolbars change viewport height on scroll: keep the grove rooted at the
+      // bottom instead of regrowing it on every scroll.
+      for (const c of culms) c.rootY = H + 8;
+    }
     pose();
-    // A new grove: what was in the air or on the ground belonged to the old one.
-    drops = [];
-    sparks = [];
-    fallers = [];
-    wildlife.clear();
   }
 
   // ------------------------------------------------------------ physics
@@ -544,21 +554,28 @@ export function initBambooField(canvas: HTMLCanvasElement) {
     );
   }
 
-  /** Wind at a point: the breeze, plus any faint pointer gust nearby. */
-  function windAt(x: number, y: number, t: number): [number, number] {
-    let wx = breezeAt(t) * (0.4 + 0.6 * (1 - y / H));
+  let windX = 0;
+  let windY = 0;
+
+  /** Wind at a point: the precomputed breeze, plus any faint pointer gust nearby. Writes windX/windY. */
+  function sampleWind(x: number, y: number, breeze: number) {
+    let wx = breeze * (0.4 + 0.6 * (1 - y / H));
     let wy = 0;
-    const R = 120 * scale;
-    for (const g of gusts) {
-      const dx = x - g.x;
-      const dy = y - g.y;
-      const d2 = dx * dx + dy * dy;
-      if (d2 > R * R * 4) continue;
-      const fall = Math.exp(-d2 / (R * R)) * g.life;
-      wx += g.vx * fall;
-      wy += g.vy * fall;
+    if (gusts.length) {
+      const r2 = (120 * scale) ** 2;
+      const maxD2 = r2 * 4;
+      for (const g of gusts) {
+        const dx = x - g.x;
+        const dy = y - g.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 > maxD2) continue;
+        const fall = Math.exp(-d2 / r2) * g.life;
+        wx += g.vx * fall;
+        wy += g.vy * fall;
+      }
     }
-    return [wx, wy];
+    windX = wx;
+    windY = wy;
   }
 
   /** Rebuild a chain's pose from its base: absolute angles and joints. */
@@ -594,30 +611,40 @@ export function initBambooField(canvas: HTMLCanvasElement) {
   }
 
   function step(dt: number, t: number) {
-    for (const g of gusts) g.life -= dt / 1.4;
-    gusts = gusts.filter((g) => g.life > 0);
+    if (gusts.length) {
+      for (let i = gusts.length - 1; i >= 0; i--) {
+        gusts[i]!.life -= dt / 1.4;
+        if (gusts[i]!.life <= 0) gusts.splice(i, 1);
+      }
+    }
+    const breeze = breezeAt(t);
 
     for (const c of culms) {
       const n = c.segs.length;
       const give = 1 - c.depth * 0.3;
       for (let i = 0; i < n; i++) {
-        const [wx, wy] = windAt(c.x[i + 1], c.y[i + 1], t);
+        sampleWind(c.x[i + 1]!, c.y[i + 1]!, breeze);
         const lever = 1 + (n - i) * 0.2;
-        spring(c.segs[i], c.k0 + ((c.k1 - c.k0) * i) / (n - 1), torqueOf(c.a[i + 1], wx, wy) * lever * 0.32 * give, dt);
+        spring(
+          c.segs[i]!,
+          c.k0 + ((c.k1 - c.k0) * i) / (n - 1),
+          torqueOf(c.a[i + 1]!, windX, windY) * lever * 0.32 * give,
+          dt,
+        );
       }
       for (const b of c.branches) {
         for (let i = 0; i < b.segs.length; i++) {
-          const [wx, wy] = windAt(b.x[i + 1], b.y[i + 1], t);
-          spring(b.segs[i], i ? b.k1 : b.k0, torqueOf(b.a[i + 1], wx, wy) * 3 * give, dt);
+          sampleWind(b.x[i + 1]!, b.y[i + 1]!, breeze);
+          spring(b.segs[i]!, i ? b.k1 : b.k0, torqueOf(b.a[i + 1]!, windX, windY) * 3 * give, dt);
         }
         for (const spray of b.sprays) {
-          const [wx, wy] = windAt(b.x[spray.at], b.y[spray.at], t);
-          const gust = Math.hypot(wx, wy);
+          sampleWind(b.x[spray.at]!, b.y[spray.at]!, breeze);
+          const gust = Math.hypot(windX, windY);
           for (const leaf of spray.leaves) {
-            const a = b.a[spray.at] + leaf.rest + leaf.angle;
+            const a = b.a[spray.at]! + leaf.rest + leaf.angle;
             // Leaves flutter: a quick wobble that grows with the wind.
             const flutter = Math.sin(t * (6 + (leaf.seed % 4)) + leaf.seed) * gust * 1.4;
-            spring(leaf, 26, (torqueOf(a, wx, wy) * 7 + flutter) * give, dt);
+            spring(leaf, 26, (torqueOf(a, windX, windY) * 7 + flutter) * give, dt);
           }
         }
       }
@@ -929,8 +956,6 @@ export function initBambooField(canvas: HTMLCanvasElement) {
       leaf(bx, by, f.a, f.len, f.wid, 1, f.ink * fade);
     }
   }
-
-  // ------------------------------------------------------------ drawing
 
   // ------------------------------------------------------------ frost
 

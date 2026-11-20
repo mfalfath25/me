@@ -3,7 +3,7 @@
  * sampled once per cell, levelled, then each cell drawn as a glyph from a ramp, a halftone dot, a
  * 1-bit pixel, a toy brick or a letter tile, in the preset's colour.
  */
-import { makeColorReader, type Rgb } from './color';
+import { makeColorReader, percentileRange, type Rgb } from './color';
 import { applyContrast, glyphFor, type Preset } from './presets';
 
 /** Cell width in css px at the reference 130 columns, per kind. */
@@ -15,9 +15,9 @@ const BAYER8 = (() => {
     const next: number[] = [];
     for (let y = 0; y < size * 2; y++) {
       for (let x = 0; x < size * 2; x++) {
-        const base = m[(y % size) * size + (x % size)] * 4;
+        const base = m[(y % size) * size + (x % size)]! * 4;
         const quad = (y < size ? 0 : 2) + (x < size ? 0 : 1);
-        next.push(base + [0, 2, 3, 1][quad]);
+        next.push(base + [0, 2, 3, 1][quad]!);
       }
     }
     m.splice(0, m.length, ...next);
@@ -28,13 +28,11 @@ const BAYER8 = (() => {
 let reader: ReturnType<typeof makeColorReader> | null = null;
 let sampler: CanvasRenderingContext2D | null = null;
 
-const css = ([r, g, b]: Rgb) => `rgb(${Math.round(r * 255)} ${Math.round(g * 255)} ${Math.round(b * 255)})`;
-const luma = ([r, g, b]: Rgb) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
-const mix = (a: Rgb, b: Rgb, t: number): Rgb => [
-  a[0] + (b[0] - a[0]) * t,
-  a[1] + (b[1] - a[1]) * t,
-  a[2] + (b[2] - a[2]) * t,
-];
+const cssRgb = (r: number, g: number, b: number) =>
+  `rgb(${Math.round(r * 255)} ${Math.round(g * 255)} ${Math.round(b * 255)})`;
+const css = ([r, g, b]: Rgb) => cssRgb(r, g, b);
+const luma3 = (r: number, g: number, b: number) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 /** A cheap per-cell hash, so scatter is the same on every redraw. */
 const hash = (x: number, y: number) => {
@@ -54,13 +52,6 @@ function sampleRgb(img: CanvasImageSource, w: number, h: number): Uint8ClampedAr
   } catch {
     return null; // a cross-origin image would taint the canvas
   }
-}
-
-/** Raise saturation by `boost` (0 to 100) about the colour's own grey. */
-function saturate(c: Rgb, boost: number): Rgb {
-  const grey = luma(c);
-  const k = 1 + boost / 100;
-  return c.map((v) => Math.min(1, Math.max(0, grey + (v - grey) * k))) as Rgb;
 }
 
 export interface GlyphTheme {
@@ -92,14 +83,12 @@ export function drawGlyphs(canvas: HTMLCanvasElement, img: CanvasImageSource, pr
   // Brightness per cell, levelled to the 2nd and 98th percentiles, then the preset's contrast.
   const lum = new Float32Array(cols * rows);
   for (let i = 0; i < lum.length; i++) {
-    lum[i] = luma([data[i * 4] / 255, data[i * 4 + 1] / 255, data[i * 4 + 2] / 255]);
+    lum[i] = luma3(data[i * 4]! / 255, data[i * 4 + 1]! / 255, data[i * 4 + 2]! / 255);
   }
-  const sorted = Float32Array.from(lum).sort();
-  const lo = sorted[Math.floor(sorted.length * 0.02)] ?? 0;
-  const hi = sorted[Math.floor(sorted.length * 0.98)] ?? 1;
+  const [lo, hi] = percentileRange(lum, 0.02, 0.98);
   const range = Math.max(hi - lo, 0.05);
   for (let i = 0; i < lum.length; i++) {
-    let v = Math.min(1, Math.max(0, (lum[i] - lo) / range));
+    let v = clamp01((lum[i]! - lo) / range);
     v = applyContrast(v, preset.contrast);
     lum[i] = preset.invert ? 1 - v : v;
   }
@@ -108,25 +97,27 @@ export function drawGlyphs(canvas: HTMLCanvasElement, img: CanvasImageSource, pr
   const paper = read(paperCss, [1, 1, 1]);
   // On a light background a glyph carries the photo's darks; on a dark one (or over the photo)
   // its lights.
-  const lightPaper = !preset.overlay && luma(paper) > 0.5;
-  const ramp = theme.ramp.map((c) => read(c, [0, 0, 0]));
-  const stops = preset.colour.mode === 'palette' ? preset.colour.stops.map((c) => read(c, [1, 1, 1])) : [];
-  const mono: Rgb = preset.colour.mode === 'mono' ? read(preset.colour.color, [1, 1, 1]) : [1, 1, 1];
+  const lightPaper = !preset.overlay && luma3(paper[0], paper[1], paper[2]) > 0.5;
+  const rampCss = theme.ramp.map((c) => css(read(c, [0, 0, 0])));
+  const stopsCss = preset.colour.mode === 'palette' ? preset.colour.stops.map((c) => css(read(c, [1, 1, 1]))) : [];
+  const monoCss = preset.colour.mode === 'mono' ? css(read(preset.colour.color, [1, 1, 1])) : '';
   const tint = preset.colour.mode === 'source' && preset.colour.tint ? read(preset.colour.tint, [1, 1, 1]) : null;
+  const boostK = preset.colour.mode === 'source' ? 1 + preset.colour.boost / 100 : 1;
 
-  const colourAt = (i: number, v: number): Rgb => {
-    const c = preset.colour;
-    if (c.mode === 'mono') return mono;
-    const b = lum[i];
-    if (c.mode === 'palette') return stops[Math.min(stops.length - 1, Math.floor(b * stops.length))];
-    if (c.mode === 'theme') {
-      // Light paper: shadow to the fourth step by ink; dark paper: second step up by brightness.
-      const t = lightPaper ? 1 - v : b;
-      return ramp[Math.min(ramp.length - 1, (lightPaper ? 0 : 1) + Math.floor(t * (ramp.length - 1)))];
+  const sourceRgb = (i: number): [number, number, number] => {
+    const r0 = data[i * 4]! / 255;
+    const g0 = data[i * 4 + 1]! / 255;
+    const b0 = data[i * 4 + 2]! / 255;
+    const grey = luma3(r0, g0, b0);
+    let r = clamp01(grey + (r0 - grey) * boostK);
+    let g = clamp01(grey + (g0 - grey) * boostK);
+    let b = clamp01(grey + (b0 - grey) * boostK);
+    if (tint) {
+      r += (r * tint[0] - r) * 0.6;
+      g += (g * tint[1] - g) * 0.6;
+      b += (b * tint[2] - b) * 0.6;
     }
-    let rgb = saturate([data[i * 4] / 255, data[i * 4 + 1] / 255, data[i * 4 + 2] / 255], c.boost);
-    if (tint) rgb = mix(rgb, [rgb[0] * tint[0], rgb[1] * tint[1], rgb[2] * tint[2]], 0.6);
-    return rgb;
+    return [r, g, b];
   };
 
   canvas.width = W;
@@ -148,10 +139,21 @@ export function drawGlyphs(canvas: HTMLCanvasElement, img: CanvasImageSource, pr
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
+  let lastFill = '';
+  const setFill = (style: string) => {
+    if (style !== lastFill) {
+      ctx.fillStyle = style;
+      lastFill = style;
+    }
+  };
+  const tau = Math.PI * 2;
+
   for (let r = 0; r < rows; r++) {
+    const bayerRow = (r & 7) * 8;
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
-      const v = lightPaper ? 1 - lum[i] : lum[i];
+      const b = lum[i]!;
+      const v = lightPaper ? 1 - b : b;
       let x = ox + c * cw;
       let y = oy + r * ch;
       if (preset.kind !== 'lego' && preset.kind !== 'tiles') {
@@ -165,8 +167,36 @@ export function drawGlyphs(canvas: HTMLCanvasElement, img: CanvasImageSource, pr
         const { opacity, fade } = preset.overlay;
         ctx.globalAlpha = opacity * (1 - fade + fade * v);
       }
-      const colour = colourAt(i, v);
-      ctx.fillStyle = css(colour);
+
+      if (preset.kind === 'lego') {
+        // A brick in the photo's colour, snapped to a few levels, with a stud on top.
+        const [sr, sg, sb] = sourceRgb(i);
+        const br = Math.round(sr * 5) / 5;
+        const bg = Math.round(sg * 5) / 5;
+        const bb = Math.round(sb * 5) / 5;
+        setFill(cssRgb(br * 0.75, bg * 0.75, bb * 0.75));
+        ctx.fillRect(x, y, cw, ch);
+        setFill(cssRgb(br, bg, bb));
+        ctx.fillRect(x + 1, y + 1, cw - 2, ch - 2);
+        setFill(cssRgb(br + (1 - br) * 0.2, bg + (1 - bg) * 0.2, bb + (1 - bb) * 0.2));
+        ctx.beginPath();
+        ctx.arc(x + cw / 2, y + ch / 2, cw * 0.28, 0, tau);
+        ctx.fill();
+        continue;
+      }
+
+      const mode = preset.colour.mode;
+      if (mode === 'mono') {
+        setFill(preset.kind === 'tiles' ? cssRgb(b, b, b) : monoCss);
+      } else if (mode === 'palette') {
+        setFill(stopsCss[Math.min(stopsCss.length - 1, Math.floor(b * stopsCss.length))]!);
+      } else if (mode === 'theme') {
+        const t = lightPaper ? 1 - v : b;
+        setFill(rampCss[Math.min(rampCss.length - 1, (lightPaper ? 0 : 1) + Math.floor(t * (rampCss.length - 1)))]!);
+      } else {
+        const [sr, sg, sb] = sourceRgb(i);
+        setFill(cssRgb(sr, sg, sb));
+      }
 
       switch (preset.kind) {
         case 'ramp': {
@@ -178,35 +208,20 @@ export function drawGlyphs(canvas: HTMLCanvasElement, img: CanvasImageSource, pr
           const radius = Math.sqrt(v) * cw * 0.5;
           if (radius < 0.4) break;
           ctx.beginPath();
-          ctx.arc(x + cw / 2, y + ch / 2, radius, 0, Math.PI * 2);
+          ctx.arc(x + cw / 2, y + ch / 2, radius, 0, tau);
           ctx.fill();
           break;
         }
         case 'dither':
-          if (v > BAYER8[(r % 8) * 8 + (c % 8)]) ctx.fillRect(x, y, cw, ch);
+          if (v > BAYER8[bayerRow + (c & 7)]!) ctx.fillRect(x, y, cw, ch);
           break;
-        case 'lego': {
-          // A brick in the photo's colour, snapped to a few levels, with a stud on top.
-          const base = colour.map((k) => Math.round(k * 5) / 5) as Rgb;
-          ctx.fillStyle = css(mix(base, [0, 0, 0], 0.25));
-          ctx.fillRect(x, y, cw, ch);
-          ctx.fillStyle = css(base);
-          ctx.fillRect(x + 1, y + 1, cw - 2, ch - 2);
-          ctx.fillStyle = css(mix(base, [1, 1, 1], 0.2));
-          ctx.beginPath();
-          ctx.arc(x + cw / 2, y + ch / 2, cw * 0.28, 0, Math.PI * 2);
-          ctx.fill();
-          break;
-        }
         case 'tiles': {
           // A tile in the photo's colour (or its grey), a light letter on it: sparse on dark
           // tiles, dense on pale ones.
-          const b = lum[i];
-          if (preset.colour.mode === 'mono') ctx.fillStyle = css([b, b, b]);
           ctx.fillRect(x + 1, y + 1, cw - 2, ch - 2);
           // Below the cutoff the tile stays blank.
           if (b * 100 < preset.cutoff) break;
-          ctx.fillStyle = b > 0.6 ? 'rgb(20 20 26 / 0.7)' : 'rgb(250 250 249 / 0.8)';
+          setFill(b > 0.6 ? 'rgb(20 20 26 / 0.7)' : 'rgb(250 250 249 / 0.8)');
           ctx.fillText(glyphFor(preset.ramp, b), x + cw / 2, y + ch / 2);
           break;
         }
