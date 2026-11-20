@@ -17,6 +17,7 @@ type Props = SeoProps;
 const props = Astro.props;
 const { locale } = props;
 const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
+const umamiWebsiteId = import.meta.env.PUBLIC_UMAMI_WEBSITE_ID ?? '28192628-53b1-46db-ac6f-1d2e400477b3';
 ---
 
 <!doctype html>
@@ -48,6 +49,9 @@ const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
       })();
     </script>
     <Seo {...props} />
+    {import.meta.env.PROD && umamiWebsiteId && (
+      <script defer is:inline src="https://cloud.umami.is/script.js" data-website-id={umamiWebsiteId} />
+    )}
     {import.meta.env.PROD && analyticsToken && (
       <script
         defer
@@ -71,8 +75,10 @@ const analyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
     </div>
     {site.presetMenu && <PresetMenu locale={locale} />}
     <script>
+      import { initLinkTracking } from '@/scripts/analytics';
       import { initReveal } from '@/scripts/reveal';
       initReveal();
+      initLinkTracking();
     </script>
   </body>
 </html>

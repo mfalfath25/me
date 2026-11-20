@@ -28,7 +28,8 @@ Visiting `/keystatic` then asks for the Basic Auth password, then GitHub login.
 
 ## 4. Analytics (optional)
 
-Cloudflare dashboard → Web Analytics → add site → copy the token into `PUBLIC_CF_ANALYTICS_TOKEN`. Cookieless, so no banner.
+- **Umami Cloud** (cookieless pageviews + link click tracking via `src/scripts/analytics.ts`): wired in `BaseLayout.astro` in production builds; override via `PUBLIC_UMAMI_WEBSITE_ID`.
+- **Cloudflare Web Analytics** (optional): Cloudflare dashboard → Web Analytics → add site → copy the token into `PUBLIC_CF_ANALYTICS_TOKEN`. Cookieless, so no banner.
 
 ## Later: custom domain
 
