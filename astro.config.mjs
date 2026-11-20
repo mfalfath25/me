@@ -11,7 +11,7 @@ import { DEFAULT_LOCALE, LOCALES } from './src/i18n/config.ts';
 import { untranslatedRoutes } from './src/i18n/untranslated-routes.ts';
 
 // Single source of truth for the canonical origin. Change SITE_URL once a domain is bought.
-const SITE_URL = process.env.SITE_URL ?? 'https://me.pages.dev';
+const SITE_URL = process.env.SITE_URL ?? 'https://me.mfalfath25.workers.dev';
 
 const noindexRoutes = new Set(untranslatedRoutes());
 
