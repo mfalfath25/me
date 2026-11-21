@@ -6,7 +6,7 @@
  * In `astro dev` the gate is skipped so local editing just works.
  */
 import { defineMiddleware } from 'astro:middleware';
-import { STUDIO_BASIC_AUTH_PASSWORD, STUDIO_BASIC_AUTH_USER } from 'astro:env/server';
+import { getSecret } from 'astro:env/server';
 
 const PROTECTED = /^\/(api\/)?keystatic(\/|$)/;
 
@@ -20,7 +20,9 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 function isAuthorized(header: string | null): boolean {
-  if (!STUDIO_BASIC_AUTH_USER || !STUDIO_BASIC_AUTH_PASSWORD) return false;
+  const expectedUser = getSecret('STUDIO_BASIC_AUTH_USER')?.trim();
+  const expectedPass = getSecret('STUDIO_BASIC_AUTH_PASSWORD')?.trim();
+  if (!expectedUser || !expectedPass) return false;
   if (!header?.startsWith('Basic ')) return false;
   let decoded: string;
   try {
@@ -30,8 +32,8 @@ function isAuthorized(header: string | null): boolean {
   }
   const sep = decoded.indexOf(':');
   if (sep < 0) return false;
-  const userOk = timingSafeEqual(decoded.slice(0, sep), STUDIO_BASIC_AUTH_USER);
-  const passOk = timingSafeEqual(decoded.slice(sep + 1), STUDIO_BASIC_AUTH_PASSWORD);
+  const userOk = timingSafeEqual(decoded.slice(0, sep), expectedUser);
+  const passOk = timingSafeEqual(decoded.slice(sep + 1), expectedPass);
   return userOk && passOk;
 }
 
